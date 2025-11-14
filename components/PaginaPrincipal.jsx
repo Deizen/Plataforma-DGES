@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import { Grid, Box,Button, Typography,IconButton,List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import FileUploader from "./FileUploader";
@@ -9,19 +10,55 @@ import logoDGES from "../public/Images/logo_dges.png";
 import logoVision from "../public/Images/logo_administracion.png";
 import Image from "next/image";
 import Select from "./Select";
-import { unidadesRegionales, facultades, carreras, localidades } from "../data/catalogos";
+import { dumy, facultades, carreras, localidades } from "../data/catalogos2";
+// import { obtenerUnidadesRegionales } from "@/data/catalogos";
+import { useCatalogos } from "@/hooks/useCatalogos"; // Para traer los 4 catalogos
+import { fetchCatalogo } from "@/lib/fetchCatalogo";
 
 
 export default function PaginaPrincipal() {
+
+  // const [unidadesRegionales, setUnidadesRegionales] = React.useState([]); // Datos cargados desde el servidor
+  
   const [uploadedFiles, setUploadedFiles] = React.useState([]); // JS puro, sin tipos
   const [pendingFiles, setPendingFiles] = React.useState([]); // Archivos seleccionados pero no subidos
-  const [selectedUnidadadRegional, setSelectedUnidadRegional] = React.useState(""); 
-  const [selectedLocalidad, setSelectedLocalidad] = React.useState("");
-  const [selectedFacultad, setSelectedFacultad] = React.useState("");
-  const [selectedCarrera, setSelectedCarrera] = React.useState("");
-        
 
-  // 🔹 Función para confirmar subida (simulada)
+    const [selectedUnidadadRegional, setSelectedUnidadRegional] = React.useState(""); 
+    const [selectedLocalidad, setSelectedLocalidad] = React.useState("");
+    const [selectedEscuela, setSelectedEscuela] = React.useState("");
+    const [selectedCarrera, setSelectedCarrera] = React.useState("");
+        
+  const { unidades, localidades, escuelas, carreras } = useCatalogos();
+
+  const filteredLocalidades = localidades.filter(
+    (loc) => loc.UnidadRegionalId  === selectedUnidadadRegional
+  );
+
+  const filteredEscuelas = escuelas.filter(
+    (esc) => esc.LocalidadId === selectedLocalidad
+  );
+
+  const filteredCarreras = carreras.filter(
+    (car) => car.EscuelaId === selectedEscuela
+  );
+
+  console.log("Localidades", filteredLocalidades);
+  console.log("Escuelas", filteredEscuelas);
+  console.log("Carreras", filteredCarreras);
+  
+
+  // React.useEffect(() => {
+  //   const fetchData = async () => {
+  //     const data = await fetchCatalogo("unidadregional");
+  //     setUnidadesRegionales(data);
+  //   };
+
+  //   fetchData();
+  // }, []);
+
+
+
+  // 🔹 Función para confirmar subida (simulada) --Cosas de archivo
   const handleUpload = () => {
     setUploadedFiles((prev) => [...prev, ...pendingFiles]);
     setPendingFiles([]);
@@ -224,10 +261,13 @@ export default function PaginaPrincipal() {
         <Grid item xs={12} sm={3}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={unidadesRegionales}
+                    options={unidades}
                     value={selectedUnidadadRegional}
                     onChange={(value) => {
                     setSelectedUnidadRegional(value);
+                    setSelectedLocalidad(""); // reset siguientes niveles
+                    setSelectedEscuela("");
+                    setSelectedCarrera("");
                     console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una unidad regional..."
@@ -237,10 +277,12 @@ export default function PaginaPrincipal() {
         <Grid item xs={12} sm={3}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={localidades}
+                    options={filteredLocalidades}
                     value={selectedLocalidad}
                     onChange={(value) => {
                     setSelectedLocalidad(value);
+                    setSelectedEscuela("");
+                    setSelectedCarrera("");
                     console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una localidad..."
@@ -250,10 +292,11 @@ export default function PaginaPrincipal() {
         <Grid item xs={12} sm={3}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={facultades}
-                    value={selectedFacultad}
+                    options={filteredEscuelas}
+                    value={selectedEscuela}
                     onChange={(value) => {
-                    setSelectedFacultad(value);
+                    setSelectedEscuela(value);
+                    setSelectedCarrera("");
                     console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una facultad..."
@@ -263,7 +306,7 @@ export default function PaginaPrincipal() {
         <Grid item xs={12} sm={5}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={carreras}
+                    options={filteredCarreras}
                     value={selectedCarrera}
                     onChange={(value) => {
                     setSelectedCarrera(value);

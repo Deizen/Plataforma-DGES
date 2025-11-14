@@ -1,11 +1,11 @@
 
 // Datos de las escuelas 
 
-export const unidadesRegionales = [
-  { value: 1, label: "Norte" },
-  { value: 2, label: "Centro Norte" },
-  { value: 3, label: "Centro" },
-  { value: 4, label: "Sur" },
+export const dumy = [
+  { value: 1, label: "Norte_dumy" },
+  { value: 2, label: "Centro Norte_dumy" },
+  { value: 3, label: "Centro_dumy" },
+  { value: 4, label: "Sur_dumy" },
 ];
 
 export const localidades = [
