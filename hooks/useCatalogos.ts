@@ -7,17 +7,19 @@ export function useCatalogos() {
     localidades: [],
     escuelas: [],
     carreras: [],
+    modalidades: [],
   });
 
   useEffect(() => {
     async function cargar() {
-      const [unidades, localidades, escuelas, carreras] = await Promise.all([
+      const [unidades, localidades, escuelas, carreras, modalidades] = await Promise.all([
         fetchCatalogo("unidadregional"),
         fetchCatalogo("localidad"),
         fetchCatalogo("escuela"),
         fetchCatalogo("carrera"),
+        fetchCatalogo("modalidad"),
       ]);
-      setCatalogos({ unidades, localidades, escuelas, carreras });
+      setCatalogos({ unidades, localidades, escuelas, carreras, modalidades});
     }
     cargar();
   }, []);

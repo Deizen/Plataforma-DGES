@@ -13,6 +13,8 @@ export default function Select({
       getOptionLabel={(option) => option.label || ""}
       value={options.find((opt) => opt.value === value) || null}
       onChange={(_, newValue) => onChange(newValue ? newValue.value : "")}
+      //onChange={(_, newValue) => onChange(newValue || null)}
+      
       sx={{
         minWidth: 250,
         "& .MuiOutlinedInput-root": {

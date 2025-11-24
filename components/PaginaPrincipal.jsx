@@ -5,15 +5,17 @@ import { Grid, Box,Button, Typography,IconButton,List, ListItem, ListItemIcon, L
 import FileUploader from "./FileUploader";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import imagenUas from "../public/Images/logo_uas2.png";
-import logoDGES from "../public/Images/logo_dges.png";
-import logoVision from "../public/Images/logo_administracion.png";
+import BlockIcon from "@mui/icons-material/Block";
+import imagenUas from "../public/images/logo_uas2.png";
+import logoDGES from "../public/images/logo_dges.png";
+import logoVision from "../public/images/logo_administracion.png";
 import Image from "next/image";
 import Select from "./Select";
 import { dumy, facultades, carreras, localidades } from "../data/catalogos2";
 // import { obtenerUnidadesRegionales } from "@/data/catalogos";
 import { useCatalogos } from "@/hooks/useCatalogos"; // Para traer los 4 catalogos
-import { fetchCatalogo } from "@/lib/fetchCatalogo";
+// import { fetchCatalogo } from "@/lib/fetchCatalogo";
+import Header from "./Header";
 
 
 export default function PaginaPrincipal() {
@@ -27,8 +29,10 @@ export default function PaginaPrincipal() {
     const [selectedLocalidad, setSelectedLocalidad] = React.useState("");
     const [selectedEscuela, setSelectedEscuela] = React.useState("");
     const [selectedCarrera, setSelectedCarrera] = React.useState("");
+    const [selectedModalidad, setSelectedModalidad] = React.useState(""); 
         
-  const { unidades, localidades, escuelas, carreras } = useCatalogos();
+    
+  const { unidades, localidades, escuelas, carreras, modalidades } = useCatalogos();
 
   const filteredLocalidades = localidades.filter(
     (loc) => loc.UnidadRegionalId  === selectedUnidadadRegional
@@ -41,221 +45,142 @@ export default function PaginaPrincipal() {
   const filteredCarreras = carreras.filter(
     (car) => car.EscuelaId === selectedEscuela
   );
-
-  console.log("Localidades", filteredLocalidades);
-  console.log("Escuelas", filteredEscuelas);
-  console.log("Carreras", filteredCarreras);
   
+  const carrerasUnicas = Object.values(
+    filteredCarreras.reduce((acc, car) => {
+      acc[car.label] = { 
+        label: car.label, 
+        value: car.label 
+      };
+      return acc;
+    }, {})
+  );
 
-  // React.useEffect(() => {
-  //   const fetchData = async () => {
-  //     const data = await fetchCatalogo("unidadregional");
-  //     setUnidadesRegionales(data);
-  //   };
+  // const modalidadesCarrera = filteredCarreras
+  // .filter(car => car.label === selectedCarrera)
+  // .map(car => modalidades.find(m => m.value === car.ModalidadId));
 
-  //   fetchData();
-  // }, []);
+  const modalidadesCarrera = Object.values(
+  filteredCarreras
+    .filter(car => car.label === selectedCarrera)
+   //.map(car => modalidades.find(m => m.value === car.ModalidadId))
+   // Aquí pueden haber duplicados
+   .reduce((acc, car) => {
+     const modalidad = modalidades.find(m => m.value === car.ModalidadId);
+     if (modalidad) acc[modalidad.value] = modalidad;  // ← evita duplicados
+     return acc;
+   }, {})
+);
 
 
+  const carreraSeleccionada = filteredCarreras.find(
+    (car) => car.label === selectedCarrera && car.ModalidadId === selectedModalidad
+  );
+
+  const carreraId = carreraSeleccionada?.value; // este es el ID de la carrera
 
   // 🔹 Función para confirmar subida (simulada) --Cosas de archivo
-  const handleUpload = () => {
-    setUploadedFiles((prev) => [...prev, ...pendingFiles]);
+  const handleUpload = async () => {
+    const formData = new FormData();
+
+    pendingFiles.forEach((item) => {
+      formData.append("files", item.file);
+    });
+
+    // 1️⃣ Subir archivo físicamente al servidor
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+      carrera: carreraId,
+          modalidad: selectedModalidad,
+    });
+
+    const result = await res.json(); 
+    // result.files = [{ fileName, filePath }]
+
+    // 2️⃣ Guardar cada archivo en MySQL
+    for (const file of result.files) {
+      await fetch("/api/archivos/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: file.name,
+          ruta: file.url, // ej: "/uploads/archivo.pdf"
+          unidad: selectedUnidadadRegional,
+          localidad: selectedLocalidad,
+          escuela: selectedEscuela,
+          carrera: carreraId,
+          modalidad: selectedModalidad,
+          usuario: 1111, // ID de usuario fijo por ahora
+        }),
+      });
+    }
+
+
+    // 3️⃣ Actualizar UI
+    setUploadedFiles((prev) => [...prev, ...result.files]);
     setPendingFiles([]);
   };
-  
+
+  React.useEffect(() => {
+    if (
+      selectedUnidadadRegional &&
+      selectedLocalidad &&
+      selectedEscuela &&
+      selectedCarrera &&
+      selectedModalidad &&
+      carreraId
+    ) {
+      // ahora sí llamar al backend
+      cargarArchivosSubidos();
+    }
+  }, [
+    selectedUnidadadRegional,
+    selectedLocalidad,
+    selectedEscuela,
+    selectedCarrera,
+    selectedModalidad,
+    carreraId
+  ]);
+
+  // 🔹 Función para cargar archivos ya subidos desde el servidor
+  const cargarArchivosSubidos = async () => {
+    try {
+      const res = await fetch("/api/archivos/obtener", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          unidad: selectedUnidadadRegional,
+          localidad: selectedLocalidad,
+          escuela: selectedEscuela,
+          carrera: carreraId,
+          modalidad: selectedModalidad,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        console.error("Error:", data.error);
+        return;
+      }
+
+      // Transformar archivos a lo que usa tu frontend
+      const mapped = data.archivos.map((a) => ({
+        id: a.Id,
+        name: a.Nombre,
+        url: a.Ruta,
+      }));
+
+      setUploadedFiles(mapped);
+      setPendingFiles([]);
+    } catch (error) {
+      console.error("❌ Error cargando archivos:", error);
+    }
+  };
+
   return (
     <Box sx={{ width: "100%", background: "linear-gradient(to right, #1d70b8, #0c3b74)", m: 0, p: 0 }}>
-    {/* Sección superior con logos y texto */}
-    <Grid
-        container
-        alignItems="center"
-        sx={{
-        background: "linear-gradient(to right, #1d70b8, #0c3b74)",
-        p: 0,
-        height: "115px", // altura total de la franja superior
-        position: "relative", // ¡CLAVE para que el 'absolute' funcione!
-        }}
-    >
-        {/* --- IZQUIERDA: Logo UAS (md={2}) --- */}
-        <Grid
-        item
-        xs={12}
-        md={2}
-        display="flex"
-        justifyContent="flex-start"
-        alignItems="stretch"
-        sx={{
-            pl: 0,
-            overflow: "hidden",
-        }}
-        >
-        <Box
-            sx={{
-            height: "100%",
-            display: "flex",
-            alignItems: "stretch",
-            justifyContent: "center",
-            }}
-        >
-            <Image
-            src={imagenUas}
-            alt="Logo UAS"
-            style={{
-                height: "100%",
-                width: "auto",
-                objectFit: "contain",
-            }}
-            />
-        </Box>
-        </Grid>
-
-
-    {/* --- CENTRO: Texto (md={10}) --- */}
-    <Grid
-        item
-        xs={12}
-        md={10} 
-        display="flex"
-        justifyContent="flex-start"  // **CLAVE 1: Alineamos a la izquierda** para que el texto inicie después del margen
-        alignItems="center"
-        sx={{ 
-            ml: { md: 3 }, // Ajusta este valor (3, 4, 5, etc.) para la separación ideal
-            pr: { md: '300px' }, 
-            mb:3,
-        }} 
-        >
-        <Box 
-            sx={{ 
-                color: "white", 
-                fontWeight: "bold", 
-                // El bloque de texto en sí está alineado a la izquierda
-                textAlign: "left", 
-                lineHeight: 1.1, 
-            }}
-        >
-            {/* Línea 1: DIRECCIÓN GENERAL DE */}
-            <Typography
-            variant="h5" // Usamos un tamaño grande
-            sx={{
-                color: "white",
-                fontWeight: "bold",
-                textAlign: "left", 
-                letterSpacing: 1,
-                // Ajuste manual para el tamaño de la primera línea
-                fontSize: { xs: '1.3rem', md: '2.0rem' }, 
-                lineHeight: 1,
-            }}
-            >
-            DIRECCIÓN GENERAL DE
-            </Typography>
-
-            {/* Línea 2: EDUCACIÓN SUPERIOR */}
-            <Typography
-            variant="h5" // Usamos un tamaño ligeramente menor
-            sx={{
-                color: "white",
-                fontWeight: "bold",
-                textAlign: "left", 
-                letterSpacing: 1,
-                // Ajuste manual para el tamaño de la segunda línea
-                fontSize: { xs: '1.3rem', md: '2.0rem' }, 
-                lineHeight: 1,
-                mt: 0.5, // Pequeño margen superior para separar de la primera línea
-            }}
-            >
-            EDUCACIÓN SUPERIOR
-            </Typography>
-        </Box>
-    </Grid>
-
-    {/* --- DERECHA EXTREMA: GRUPO DGES y VISIÓN (Posicionamiento Absoluto) --- */}
-    <Box
-      sx={{
-        // ** CLAVE: Saca los logos del flujo del Grid **
-        position: "absolute",
-        right: 10, 
-        top: 0,
-        height: "100%", 
-        display: "flex",
-        justifyContent: "flex-end", 
-        alignItems: "flex-start", 
-      }}
-    >
-      {/* Contenedor Flex interno para los dos logos */}
-      <Box
-        sx={{
-          display: "flex",
-          height: "100%",
-          alignItems: "flex-start",
-        }}
-      >
-        {/* Logo DGES */}
-        <Box
-          sx={{
-            height: "100%",
-            display: "flex",
-            alignItems: "flex-start",
-          }}
-        >
-          <Image
-            src={logoDGES}
-            alt="Logo DGES"
-            style={{
-              height: "100%",
-              width: "auto",
-              objectFit: "contain",
-            }}
-          />
-        </Box>
-
-        {/* Logo Visión */}
-        <Box
-          sx={{
-            height: "100%",
-            display: "flex",
-            alignItems: "flex-start",
-            ml: 1, // Pequeño margen para separar de DGES
-          }}
-        >
-          <Image
-            src={logoVision}
-            alt="Logo Vision"
-            style={{
-              height: "100%", // Puedes ajustar este porcentaje
-              width: "auto",
-              objectFit: "contain",
-            }}
-          />
-        </Box>
-      </Box>
-    </Box>
-  </Grid>
-
-  {/* Franja inferior UAS*/}
-  <Box
-    sx={{
-      background: "linear-gradient(to right, #195fa5, #0c3b74)",
-      height: "35px",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      letterSpacing: "0.8rem",
-    }}
-  >
-    <Typography
-      variant="subtitle1"
-      sx={{
-        color: "white",
-        fontWeight: 500,
-        textTransform: "uppercase",
-        letterSpacing: "1.8rem",
-      }}
-    >
-      Universidad Autónoma de Sinaloa
-    </Typography>
-  </Box>
-
+      <Header />
       {/* Bloques 2 */}
       <Grid container spacing={1} sx={{ background: "linear-gradient(to right, #1d70b8, #0c3b74)", p: 3, borderRadius: 3, mb: 1 }}>
         <Grid item xs={12} sm={3}>
@@ -268,7 +193,6 @@ export default function PaginaPrincipal() {
                     setSelectedLocalidad(""); // reset siguientes niveles
                     setSelectedEscuela("");
                     setSelectedCarrera("");
-                    console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una unidad regional..."
                 />
@@ -283,7 +207,6 @@ export default function PaginaPrincipal() {
                     setSelectedLocalidad(value);
                     setSelectedEscuela("");
                     setSelectedCarrera("");
-                    console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una localidad..."
                 />
@@ -297,7 +220,6 @@ export default function PaginaPrincipal() {
                     onChange={(value) => {
                     setSelectedEscuela(value);
                     setSelectedCarrera("");
-                    console.log("Seleccionaste:", value);
                     }}
                     label="Selecciona una facultad..."
                 />
@@ -306,182 +228,218 @@ export default function PaginaPrincipal() {
         <Grid item xs={12} sm={5}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={filteredCarreras}
+                    options={carrerasUnicas}
                     value={selectedCarrera}
                     onChange={(value) => {
                     setSelectedCarrera(value);
-                    console.log("Seleccionaste:", value);
+                    setSelectedModalidad("");
                     }}
                     label="Selecciona una carrera..."
                 />
           </Box>
         </Grid>
+        <Grid item xs={12} sm={5}>
+          {selectedCarrera ? (
+            <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
+                <Select
+                    options={modalidadesCarrera}
+                    value={selectedModalidad}
+                    onChange={(value) => {
+                      setSelectedModalidad(value);
+                      setUploadedFiles([]); // Limpia inmediatamente
+                    }}
+                    label="Selecciona una modalidad..."
+                />
+            </Box>
+          ) : null}
+        </Grid>
       </Grid>
 
       {/* Bloques 3 */}
-    <Grid
-      container
-      spacing={2}
-      sx={{ bgcolor: "#e8f5e9", p: 3, borderRadius: 0.5, mb: 4   }}
-    >
-      {/* 🟢 Bloque de selección de archivos */}
-    <Grid item xs={12} md={3}>
-      <Box
-        sx={{
-          bgcolor: "#66bb6a",
-          p: 3,
-          borderRadius: 2,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          textAlign: "center",
-        }}
-      >
-        {/* 📁 Uploader (solo selección, no subida automática) */}
-        <FileUploader
-          showFiles={false}
-          onUpload={(files) => {
-            setPendingFiles(files); // guarda temporalmente
-            console.log("Archivos seleccionados:", files);
+      {!selectedModalidad ? (
+        <Box
+          sx={{
+            p: 4,
+            textAlign: "center",
+            bgcolor: "#e8f5e9",
+            borderRadius: 0.5,
+            mt: 2,
           }}
-        />
+        >
+          <BlockIcon sx={{ fontSize: 60, color: "#0c3b74" }} />
+          <Typography variant="h6" sx={{ color: "#1d70b8", fontWeight: "bold", mt: 2 }}>
+            Sección bloqueada
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#1d70b8" }}>
+            Selecciona todos los filtros para mostrar la sección de archivos.
+          </Typography>
+        </Box>
+      ) : (
+        <>
+        <Grid
+          container
+          spacing={2}
+          sx={{ bgcolor: "#e8f5e9", p: 3, borderRadius: 0.5, mb: 4   }}
+        >
 
-        {/* 🗂️ Lista de archivos listos para subir */}
-        {pendingFiles.length > 0 && (
+          {/* 🟢 Bloque de selección de archivos */}
+        <Grid item xs={12} md={3}>
           <Box
             sx={{
-              width: "100%",
-              mt: 2,
-              bgcolor: "rgba(255,255,255,0.2)",
+              bgcolor: "#66bb6a",
+              p: 3,
               borderRadius: 2,
-              p: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              textAlign: "center",
             }}
           >
-            <Typography variant="subtitle2" sx={{ color: "#fff", mb: 1 }}>
-              Archivos listos para subir:
-            </Typography>
-            <List dense>
-              {pendingFiles.map((file, index) => (
-                <ListItem key={index} sx={{ color: "#fff" }}>
-                  <ListItemIcon>
-                    <InsertDriveFileIcon sx={{ color: "#2e7d32" }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={file.name}
-                    primaryTypographyProps={{
-                      fontSize: 13,
-                      sx: { color: "#fff", wordBreak: "break-all" },
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Box>
-        )}
-
-        {/* 🟢 Botón separado (activo solo si hay archivos) */}
-        <Button
-          variant="contained"
-          fullWidth
-          sx={{
-            mt: 2,
-            py: 1.2,
-            fontWeight: "bold",
-            bgcolor: pendingFiles.length > 0 ? "#2e7d32" : "#9e9e9e",
-            boxShadow: pendingFiles.length > 0 ? "0px 0px 10px rgba(46,125,50,0.6)" : "none",
-            transform: pendingFiles.length > 0 ? "scale(1.03)" : "scale(1)",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              bgcolor: pendingFiles.length > 0 ? "#1b5e20" : "#9e9e9e",
-              transform: pendingFiles.length > 0 ? "scale(1.06)" : "scale(1)",
-            },
-          }}
-          disabled={pendingFiles.length === 0}
-          onClick={handleUpload}
-        >
-          Subir Archivos
-        </Button>
-      </Box>
-    </Grid>
-
-      {/* 🟢 Bloque de archivos subidos */}
-      <Grid item xs={12} md={6}>
-        <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2 }}>
-          <Typography variant="h5" fontWeight="bold" mb={2}>
-            Archivos Subidos
-          </Typography>
-
-          {uploadedFiles.length > 0 ? (
-            <Box
-              component="ul"
-              sx={{
-                listStyle: "none",
-                m: 0,
-                p: 0,
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
+            {/* 📁 Uploader (solo selección, no subida automática) */}
+            <FileUploader
+              showFiles={false}
+              onUpload={(files) => {
+                setPendingFiles(files); // guarda temporalmente
               }}
+            />
+
+            {/* 🗂️ Lista de archivos listos para subir */}
+            {pendingFiles.length > 0 && (
+              <Box
+                sx={{
+                  width: "100%",
+                  mt: 2,
+                  bgcolor: "rgba(255,255,255,0.2)",
+                  borderRadius: 2,
+                  p: 1,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ color: "#fff", mb: 1 }}>
+                  Archivos listos para subir:
+                </Typography>
+                <List dense>
+                  {pendingFiles.map((file, index) => (
+                    <ListItem key={index} sx={{ color: "#fff" }}>
+                      <ListItemIcon>
+                        <InsertDriveFileIcon sx={{ color: "#2e7d32" }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={file.name}
+                        primaryTypographyProps={{
+                          fontSize: 13,
+                          sx: { color: "#fff", wordBreak: "break-all" },
+                        }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* 🟢 Botón separado (activo solo si hay archivos) */}
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{
+                mt: 2,
+                py: 1.2,
+                fontWeight: "bold",
+                bgcolor: pendingFiles.length > 0 ? "#2e7d32" : "#9e9e9e",
+                boxShadow: pendingFiles.length > 0 ? "0px 0px 10px rgba(46,125,50,0.6)" : "none",
+                transform: pendingFiles.length > 0 ? "scale(1.03)" : "scale(1)",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  bgcolor: pendingFiles.length > 0 ? "#1b5e20" : "#9e9e9e",
+                  transform: pendingFiles.length > 0 ? "scale(1.06)" : "scale(1)",
+                },
+              }}
+              disabled={pendingFiles.length === 0}
+              onClick={handleUpload}
             >
-              {uploadedFiles.map((file, index) => (
+              Subir Archivos
+            </Button>
+          </Box>
+        </Grid>
+
+          {/* 🟢 Bloque de archivos subidos */}
+          <Grid item xs={12} md={6}>
+            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2 }}>
+              <Typography variant="h5" fontWeight="bold" mb={2}>
+                Archivos Subidos
+              </Typography>
+
+              {uploadedFiles.length > 0 ? (
                 <Box
-                  key={index}
-                  component="li"
+                  component="ul"
                   sx={{
+                    listStyle: "none",
+                    m: 0,
+                    p: 0,
                     display: "flex",
-                    alignItems: "center",
-                    bgcolor: "white",
-                    borderRadius: 1,
-                    p: 1.2,
-                    boxShadow: 1,
-                    transition: "0.3s",
-                    "&:hover": {
-                      bgcolor: "#f1f8e9",
-                      transform: "translateY(-2px)",
-                    },
+                    flexDirection: "column",
+                    gap: 1,
                   }}
                 >
-                  <InsertDriveFileIcon sx={{ color: "#388e3c", mr: 1 }} />
-                  <Typography
-                    component="a"
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{
-                      color: "#2e7d32",
-                      textDecoration: "none",
-                      fontWeight: 500,
-                      flexGrow: 1,
-                      "&:hover": { textDecoration: "underline" },
-                    }}
-                  >
-                    {file.name}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    sx={{ color: "#e53935" }}
-                    onClick={() =>
-                      setUploadedFiles((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      )
-                    }
-                  >
-                    ✕
-                  </IconButton>
+                  {uploadedFiles.map((file, index) => (
+                    <Box
+                      key={index}
+                      component="li"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        bgcolor: "white",
+                        borderRadius: 1,
+                        p: 1.2,
+                        boxShadow: 1,
+                        transition: "0.3s",
+                        "&:hover": {
+                          bgcolor: "#f1f8e9",
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                    >
+                      <InsertDriveFileIcon sx={{ color: "#388e3c", mr: 1 }} />
+                      <Typography
+                        component="a"
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          color: "#2e7d32",
+                          textDecoration: "none",
+                          fontWeight: 500,
+                          flexGrow: 1,
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                      >
+                        {file.name}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        sx={{ color: "#e53935" }}
+                        onClick={() =>
+                          setUploadedFiles((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        ✕
+                      </IconButton>
+                    </Box>
+                  ))}
                 </Box>
-              ))}
+              ) : (
+                <Typography variant="body2">
+                  No hay archivos subidos aún.
+                </Typography>
+              )}
             </Box>
-          ) : (
-            <Typography variant="body2">
-              No hay archivos subidos aún.
-            </Typography>
-          )}
-        </Box>
-      </Grid>
-    </Grid>
-
+          </Grid>
+        </Grid>
+        </>
+        )}
     </Box>
   );
 }

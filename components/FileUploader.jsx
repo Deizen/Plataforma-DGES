@@ -18,29 +18,36 @@ export default function FileUploader({ onUpload, showFiles = true }) {
   const [isDragging, setIsDragging] = React.useState(false);
   const inputRef = React.useRef(null);
 
-  const updateParent = (updatedFiles) => {
-    // envía al padre una lista con { name, url }
-    if (onUpload) {
-      const filesWithPreview = updatedFiles.map((f) => ({
-        name: f.name,
-        url: URL.createObjectURL(f),
-      }));
-      onUpload(filesWithPreview);
-    }
-  };
+// const updateParent = (updatedFiles) => {
+//   if (onUpload) {
+//     const filesToSend = updatedFiles.map((f) => ({
+//       name: f.name,
+//       file: f, // Archivo real que se enviará al backend
+//       url: URL.createObjectURL(f), // Preview local
+//     }));
+
+//     onUpload(filesToSend);
+//   }
+// };
+React.useEffect(() => {
+  if (onUpload) {
+    const filesToSend = files.map(f => ({ name: f.name, file: f, url: URL.createObjectURL(f) }));
+    onUpload(filesToSend);
+  }
+  // Dependencias solo de files
+}, [files]);
 
   const addFiles = (newFiles) => {
-    setFiles((prev) => {
-      const uniqueFiles = [...prev];
-      newFiles.forEach((file) => {
-        if (!uniqueFiles.some((f) => f.name === file.name && f.size === file.size)) {
-          uniqueFiles.push(file);
-        }
-      });
-      updateParent(uniqueFiles);
-      return uniqueFiles;
+  setFiles((prev) => {
+    const uniqueFiles = [...prev];
+    newFiles.forEach((file) => {
+      if (!uniqueFiles.some((f) => f.name === file.name && f.size === file.size)) {
+        uniqueFiles.push(file);
+      }
     });
-  };
+    return uniqueFiles;
+  });
+};
 
   const handleFileChange = (event) => {
     const selected = Array.from(event.target.files || []);

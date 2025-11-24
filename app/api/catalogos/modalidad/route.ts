@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   try {
-    const [rows] = await db.query("SELECT Id AS value, Nombre AS label,UnidadRegionalId FROM localidad WHERE Activo = 1");
+    const [rows] = await db.query("SELECT Id AS value, Nombre AS label FROM modalidad WHERE Activo = 1");
     return NextResponse.json(rows);
   } catch (error: any) {
     console.error("Error en /api/catalogos:", error);
