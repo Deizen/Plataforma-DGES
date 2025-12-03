@@ -19,12 +19,74 @@ export default function LoginPage() {
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
-    if (user === "admin" && pass === "1234") {
-      localStorage.setItem("auth", "ok");
+  // const handleLogin = () => {
+  //   if (user === "admin" && pass === "1234567890") {
+
+  //     localStorage.setItem("auth", "ok");
+  //     document.cookie = "token=ok; path=/;";
+  //     router.push("/principal");
+  //   } else {
+  //     alert("Credenciales incorrectas");
+  //   }
+  // };
+//   const handleLogin = async () => {
+//   try {
+//     const res = await fetch("/api/login", {
+//       method: "POST",
+//       body: JSON.stringify({ user, pass })
+//     });
+
+//     if (!res.ok) {
+//       alert("Credenciales incorrectas");
+//       return;
+//     }
+
+//     const data = await res.json();
+
+
+
+//     localStorage.setItem("user", JSON.stringify({
+//       id: data.id,
+//       nombre: data.nombre,
+//       usuario: data.usuario,
+//       rolid: data.rolid,
+//       permisos: data.permisos
+//     }));
+
+
+//     router.push("/principal");
+
+//   } catch (error) {
+
+//     alert("Error al iniciar sesión");
+//   }
+// };
+  const handleLogin = async () => {
+    setError("");
+    
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          usuario: user, 
+          password: pass 
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        setError(data.message);
+        return;
+      }
+
+      // Guarda al usuario en localStorage (opcional pero útil)
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       router.push("/principal");
-    } else {
-      alert("Credenciales incorrectas");
+    } catch {
+      setError("Error al conectar con el servidor");
     }
   };
 
@@ -49,18 +111,18 @@ export default function LoginPage() {
           textAlign: "center",
         }}
       >
-<Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
-  <Image
-    src={Logo_DGES}
-    alt="Logo DGES"
-    style={{
-      width: "auto",      // Tamaño controlado
-      height: "100%",
-      objectFit: "contain",
-      display: "block",    // Asegura centrado
-    }}
-  />
-</Box>
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
+        <Image
+          src={Logo_DGES}
+          alt="Logo DGES"
+          style={{
+            width: "auto",      // Tamaño controlado
+            height: "100%",
+            objectFit: "contain",
+            display: "block",    // Asegura centrado
+          }}
+        />
+      </Box>
 
         <TextField
           label="Usuario"

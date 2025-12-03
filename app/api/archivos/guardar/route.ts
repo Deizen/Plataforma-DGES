@@ -26,16 +26,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // console.log("Guardando archivo:", { nombre, ruta, usuario });
-
     const insertQuery = `
-      INSERT INTO archivos (Nombre, Ruta, UnidadId, LocalidadId, EscuelaId, CarreraId, ModalidadId, UsuarioId)
+      INSERT INTO archivo (Nombre, Ruta, UnidadId, LocalidadId, EscuelaId, CarreraId, ModalidadId, UsuarioId)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;  
 
-    await db.execute(insertQuery, [
-      nombre, 
-      ruta, 
+
+    const [result]: any = await db.execute(insertQuery, [
+      nombre,
+      ruta,
       unidad,
       localidad,
       escuela,
@@ -44,9 +43,10 @@ export async function POST(req: Request) {
       usuario
     ]);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, id: result.insertId });
+
+    //return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Error guardando archivo en MySQL:", error);
     return NextResponse.json(
       { error: "Error interno" },
       { status: 500 }

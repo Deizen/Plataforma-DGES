@@ -3,49 +3,142 @@
 import * as React from "react";
 import { Grid, Box,Button, Typography,IconButton,List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
 import FileUploader from "./FileUploader";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
+
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import BlockIcon from "@mui/icons-material/Block";
-import imagenUas from "../public/images/logo_uas2.png";
-import logoDGES from "../public/images/logo_dges.png";
-import logoVision from "../public/images/logo_administracion.png";
-import Image from "next/image";
 import Select from "./Select";
-import { dumy, facultades, carreras, localidades } from "../data/catalogos2";
-// import { obtenerUnidadesRegionales } from "@/data/catalogos";
-import { useCatalogos } from "@/hooks/useCatalogos"; // Para traer los 4 catalogos
-// import { fetchCatalogo } from "@/lib/fetchCatalogo";
-import Header from "./Header";
+import Modal from "@/components/Modal"
+import { useCatalogos } from "@/hooks/useCatalogos"; 
+import { useAuth } from "@/hooks/useAuth";
+import { permission } from "process";
 
+function matchPermission(value, permisosArray, field) {
+  // Admin → ve todo
+  if (!permisosArray || permisosArray.length === 0) return true;
+
+  // Extraemos los valores permitidos del campo (UnidadId, LocalidadId, ...)
+  const permittedValues = permisosArray.map(p => p[field]);
+
+  // Si contiene 0 → puede ver todo ese nivel
+  if (permittedValues.includes(0)) return true;
+
+  // Ver si el valor actual está dentro de lo permitido
+  return permittedValues.includes(value);
+}
 
 export default function PaginaPrincipal() {
-
   // const [unidadesRegionales, setUnidadesRegionales] = React.useState([]); // Datos cargados desde el servidor
   
   const [uploadedFiles, setUploadedFiles] = React.useState([]); // JS puro, sin tipos
   const [pendingFiles, setPendingFiles] = React.useState([]); // Archivos seleccionados pero no subidos
 
-    const [selectedUnidadadRegional, setSelectedUnidadRegional] = React.useState(""); 
-    const [selectedLocalidad, setSelectedLocalidad] = React.useState("");
-    const [selectedEscuela, setSelectedEscuela] = React.useState("");
-    const [selectedCarrera, setSelectedCarrera] = React.useState("");
-    const [selectedModalidad, setSelectedModalidad] = React.useState(""); 
-        
-    
+  const [selectedUnidadRegional, setSelectedUnidadRegional] = React.useState(""); 
+  const [selectedLocalidad, setSelectedLocalidad] = React.useState("");
+  const [selectedEscuela, setSelectedEscuela] = React.useState("");
+  const [selectedCarrera, setSelectedCarrera] = React.useState("");
+  const [selectedModalidad, setSelectedModalidad] = React.useState(""); 
+
+  const [clearUploader, setClearUploader] = React.useState(false);
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [fileToDelete, setFileToDelete] = React.useState(null);
+       
+  const [usuario, setUsuario] = React.useState(null);
+  const [permisos, setPermisos] = React.useState(null);
+  const [rol, setRol] = React.useState(null);
+
+  React.useEffect(() => {
+    const userData = localStorage.getItem("user");
+
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUsuario(parsedUser);
+      setPermisos(parsedUser.permisos);
+      setRol(parsedUser.rolid);
+    }
+  }, []);
+
+  //const user = useAuth(); // Hook personalizado para obtener el usuario autenticado}
+  
+
   const { unidades, localidades, escuelas, carreras, modalidades } = useCatalogos();
 
-  const filteredLocalidades = localidades.filter(
-    (loc) => loc.UnidadRegionalId  === selectedUnidadadRegional
-  );
+  // const filteredLocalidades = localidades.filter(
+  //   (loc) => loc.UnidadRegionalId  === selectedUnidadRegional
+  // );
 
-  const filteredEscuelas = escuelas.filter(
-    (esc) => esc.LocalidadId === selectedLocalidad
-  );
+  // const filteredEscuelas = escuelas.filter(
+  //   (esc) => esc.LocalidadId === selectedLocalidad
+  // );
 
-  const filteredCarreras = carreras.filter(
-    (car) => car.EscuelaId === selectedEscuela
-  );
+  // const filteredCarreras = carreras.filter(
+  //   (car) => car.EscuelaId === selectedEscuela
+  // );
   
+
+  // Unidades
+  const filteredUnidades = rol === 1
+    ? unidades
+    : unidades.filter(u => matchPermission(u.value , permisos, "UnidadId"));
+  // const filteredUnidades =
+  //   rol === 1 || permisos.UnidadRegionalId === 0
+  //     ? unidades
+  //     : unidades.filter((u) => u.id === permisos.UnidadRegionalId);
+
+  // Localidades
+const filteredLocalidades = rol === 1
+  ? localidades.filter(loc =>
+      selectedUnidadRegional
+        ? loc.UnidadRegionalId === selectedUnidadRegional
+        : true
+    )
+  : localidades.filter(loc =>
+      matchPermission(loc.value, permisos, "LocalidadId")
+    );
+
+  // const filteredLocalidades =
+  // rol === 1 || permisos.LocalidadId === 0
+  //   ? localidades.filter((loc) =>
+  //       // Si seleccionó una unidad manualmente
+  //       selectedUnidadRegional
+  //         ? loc.UnidadRegionalId === selectedUnidadRegional
+  //         : true
+  //     )
+  //   : localidades.filter((loc) => loc.id === permisos.LocalidadId);
+
+  //Escuelas
+const filteredEscuelas = rol === 1
+  ? escuelas.filter(esc =>
+      selectedLocalidad
+        ? esc.LocalidadId === selectedLocalidad
+        : true
+    )
+  : escuelas.filter(esc =>
+      matchPermission(esc.value, permisos, "EscuelaId")
+    );
+  // const filteredEscuelas =
+  //   rol === 1 || permisos.EscuelaId === 0
+  //     ? escuelas.filter((esc) =>
+  //         selectedLocalidad
+  //           ? esc.LocalidadId === selectedLocalidad
+  //           : true
+  //       )
+  //     : escuelas.filter((esc) => esc.id === permisos.EscuelaId);
+
+  //Carreras
+    const filteredCarreras = rol === 1
+      ? carreras.filter(car =>
+          selectedEscuela
+            ? car.EscuelaId === selectedEscuela
+            : true
+        )
+      : carreras.filter(car =>
+          matchPermission(car.value, permisos, "CarreraId")
+        );
+
+  // const modalidadesCarrera = filteredCarreras
+  // .filter(car => car.label === selectedCarrera)
+  // .map(car => modalidades.find(m => m.value === car.ModalidadId));
+
   const carrerasUnicas = Object.values(
     filteredCarreras.reduce((acc, car) => {
       acc[car.label] = { 
@@ -55,10 +148,6 @@ export default function PaginaPrincipal() {
       return acc;
     }, {})
   );
-
-  // const modalidadesCarrera = filteredCarreras
-  // .filter(car => car.label === selectedCarrera)
-  // .map(car => modalidades.find(m => m.value === car.ModalidadId));
 
   const modalidadesCarrera = Object.values(
   filteredCarreras
@@ -79,63 +168,115 @@ export default function PaginaPrincipal() {
 
   const carreraId = carreraSeleccionada?.value; // este es el ID de la carrera
 
-  // 🔹 Función para confirmar subida (simulada) --Cosas de archivo
-  const handleUpload = async () => {
-    const formData = new FormData();
+  // 🔹 Función para subir y guardar archivos
+const handleUpload = async () => {
+  const formData = new FormData();
 
-    pendingFiles.forEach((item) => {
-      formData.append("files", item.file);
-    });
+  pendingFiles.forEach((item) => {
+    formData.append("files", item.file);
+  });
 
-    // 1️⃣ Subir archivo físicamente al servidor
-    const res = await fetch("/api/upload", {
+  // 1️⃣ Subir archivo físicamente al servidor
+  const uploadRes = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  const uploadResult = await uploadRes.json();
+  // uploadResult.files = [{ name, url }]
+
+  const archivosConID = [];
+
+  // 2️⃣ Guardar cada archivo en MySQL y obtener su ID
+  for (const file of uploadResult.files) {
+    const saveRes = await fetch("/api/archivos/guardar", {
       method: "POST",
-      body: formData,
-      carrera: carreraId,
-          modalidad: selectedModalidad,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: file.name,
+        ruta: file.url,
+        unidad: selectedUnidadRegional,
+        localidad: selectedLocalidad,
+        escuela: selectedEscuela,
+        carrera: carreraId,
+        modalidad: selectedModalidad,
+        usuario: 1111, // cambiar luego por el usuario real
+      }),
     });
 
-    const result = await res.json(); 
-    // result.files = [{ fileName, filePath }]
+    const saved = await saveRes.json();
 
-    // 2️⃣ Guardar cada archivo en MySQL
-    for (const file of result.files) {
-      await fetch("/api/archivos/guardar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: file.name,
-          ruta: file.url, // ej: "/uploads/archivo.pdf"
-          unidad: selectedUnidadadRegional,
-          localidad: selectedLocalidad,
-          escuela: selectedEscuela,
-          carrera: carreraId,
-          modalidad: selectedModalidad,
-          usuario: 1111, // ID de usuario fijo por ahora
-        }),
-      });
-    }
+    // ✔ Agregar ID generado por MySQL
+    archivosConID.push({
+      id: saved.id,   // nuevo ID autogenerado
+      name: file.name,
+      url: file.url,
+    });
+  }
 
+  // 3️⃣ Actualizar UI
+  setUploadedFiles((prev) => [...prev, ...archivosConID]);
+  setPendingFiles([]);
+    
+  // 4️⃣ 🔥 LIMPIAR FILEUPLOADER
+  setClearUploader(true);
+  setTimeout(() => setClearUploader(false), 50);
+};
+  // const handleUpload = async () => {
+  //   const formData = new FormData();
 
-    // 3️⃣ Actualizar UI
-    setUploadedFiles((prev) => [...prev, ...result.files]);
-    setPendingFiles([]);
-  };
+  //   pendingFiles.forEach((item) => {
+  //     formData.append("files", item.file);
+  //   });
 
+  //   // 1️⃣ Subir archivo físicamente al servidor
+  //   const res = await fetch("/api/upload", {
+  //     method: "POST",
+  //     body: formData,
+  //     carrera: carreraId,
+  //         modalidad: selectedModalidad,
+  //   });
+
+  //   const result = await res.json(); 
+  //   // result.files = [{ fileName, filePath }]
+
+  //   // 2️⃣ Guardar cada archivo en MySQL
+  //   for (const file of result.files) {
+  //     await fetch("/api/archivos/guardar", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         nombre: file.name,
+  //         ruta: file.url, // ej: "/uploads/archivo.pdf"
+  //         unidad: selectedUnidadRegional,
+  //         localidad: selectedLocalidad,
+  //         escuela: selectedEscuela,
+  //         carrera: carreraId,
+  //         modalidad: selectedModalidad,
+  //         usuario: 1111, // ID de usuario fijo por ahora
+  //       }),
+  //     });
+  //   }
+  //   // 3️⃣ Actualizar UI
+  //   setUploadedFiles((prev) => [...prev, ...result.files]);
+  //   setPendingFiles([]);
+  // };
+
+  // Funcionalidad para recargar archivos al cambiar filtros
   React.useEffect(() => {
     if (
-      selectedUnidadadRegional &&
+      selectedUnidadRegional   &&
       selectedLocalidad &&
       selectedEscuela &&
       selectedCarrera &&
       selectedModalidad &&
       carreraId
     ) {
-      // ahora sí llamar al backend
+      // Esta parte llama al backend
       cargarArchivosSubidos();
     }
   }, [
-    selectedUnidadadRegional,
+    selectedUnidadRegional,
     selectedLocalidad,
     selectedEscuela,
     selectedCarrera,
@@ -150,7 +291,7 @@ export default function PaginaPrincipal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          unidad: selectedUnidadadRegional,
+          unidad: selectedUnidadRegional,
           localidad: selectedLocalidad,
           escuela: selectedEscuela,
           carrera: carreraId,
@@ -174,25 +315,55 @@ export default function PaginaPrincipal() {
       setUploadedFiles(mapped);
       setPendingFiles([]);
     } catch (error) {
-      console.error("❌ Error cargando archivos:", error);
+      console.error("Error cargando archivos:", error);
     }
   };
 
+    const eliminarArchivo = async (id) => {
+    try {
+      const res = await fetch("/api/archivos/eliminar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        // Sacarlo del estado local
+        setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
+      } else {
+        console.error("Error eliminando:", data.error);
+      }
+    } catch (error) {
+      console.error("Error eliminando archivo:", error);
+    }
+  };
+
+    const confirmarEliminacion = () => {
+      if (fileToDelete !== null) {
+        eliminarArchivo(fileToDelete); // Ejecuta tu API
+      }
+
+      setModalOpen(false);  // Cerramos el modal
+      setFileToDelete(null); // Limpiamos
+    };
+
   return (
     <Box sx={{ width: "100%", background: "linear-gradient(to right, #1d70b8, #0c3b74)", m: 0, p: 0 }}>
-      <Header />
       {/* Bloques 2 */}
       <Grid container spacing={1} sx={{ background: "linear-gradient(to right, #1d70b8, #0c3b74)", p: 3, borderRadius: 3, mb: 1 }}>
         <Grid item xs={12} sm={3}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
-                    options={unidades}
-                    value={selectedUnidadadRegional}
+                    options={filteredUnidades}
+                    value={selectedUnidadRegional}
                     onChange={(value) => {
                     setSelectedUnidadRegional(value);
                     setSelectedLocalidad(""); // reset siguientes niveles
                     setSelectedEscuela("");
                     setSelectedCarrera("");
+                    setSelectedModalidad("");
                     }}
                     label="Selecciona una unidad regional..."
                 />
@@ -207,6 +378,7 @@ export default function PaginaPrincipal() {
                     setSelectedLocalidad(value);
                     setSelectedEscuela("");
                     setSelectedCarrera("");
+                    setSelectedModalidad("");
                     }}
                     label="Selecciona una localidad..."
                 />
@@ -220,6 +392,7 @@ export default function PaginaPrincipal() {
                     onChange={(value) => {
                     setSelectedEscuela(value);
                     setSelectedCarrera("");
+                    setSelectedModalidad("");
                     }}
                     label="Selecciona una facultad..."
                 />
@@ -300,12 +473,13 @@ export default function PaginaPrincipal() {
             {/* 📁 Uploader (solo selección, no subida automática) */}
             <FileUploader
               showFiles={false}
+              clearSignal={clearUploader}
               onUpload={(files) => {
                 setPendingFiles(files); // guarda temporalmente
               }}
             />
 
-            {/* 🗂️ Lista de archivos listos para subir */}
+            {/* Lista de archivos listos para subir */}
             {pendingFiles.length > 0 && (
               <Box
                 sx={{
@@ -416,17 +590,23 @@ export default function PaginaPrincipal() {
                       >
                         {file.name}
                       </Typography>
-                      <IconButton
-                        size="small"
-                        sx={{ color: "#e53935" }}
-                        onClick={() =>
-                          setUploadedFiles((prev) =>
-                            prev.filter((_, i) => i !== index)
-                          )
-                        }
-                      >
-                        ✕
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          sx={{ color: "#e53935" }}
+                          // onClick={() => eliminarArchivo(file.id)}
+                            onClick={() => {
+                              setFileToDelete(file.id);   // Guardamos qué archivo vamos a borrar
+                              setModalOpen(true);         // Abrimos el modal
+                            }}
+                        >
+                          ✕
+                        </IconButton>
+                        <Modal
+                          open={modalOpen}
+                          onClose={() => setModalOpen(false)}
+                          onConfirm={confirmarEliminacion}
+                          fileName={uploadedFiles.find(f => f.id === fileToDelete)?.nombre}
+                        />
                     </Box>
                   ))}
                 </Box>

@@ -11,13 +11,6 @@ export async function POST(req: Request) {
       modalidad,
     } = await req.json();
 
-            console.log("Filtros incompletos:", {
-          unidad,
-          localidad,        
-            escuela,
-            carrera,
-            modalidad,
-        })
 
     if (!unidad || !localidad || !escuela || !carrera || !modalidad) {
       return NextResponse.json(
@@ -26,17 +19,9 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("Consultando archivos con filtros:", {
-      unidad,
-      localidad,    
-        escuela,
-        carrera,
-        modalidad,
-    });
-
     const query = `
       SELECT Id, Nombre, Ruta 
-      FROM archivos
+      FROM archivo
       WHERE UnidadId = ?
         AND LocalidadId = ?
         AND EscuelaId = ?
@@ -56,7 +41,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ archivos: rows });
   } catch (error) {
-    console.error("❌ Error consultando archivos:", error);
     return NextResponse.json(
       { error: "Error interno" },
       { status: 500 }

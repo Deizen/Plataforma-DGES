@@ -2,13 +2,20 @@
 " use client";
 
 import * as React from "react";
-import { Grid, Box, Typography } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { Grid, Box, Typography,Button,Tooltip,IconButton } from "@mui/material";
 import imagenUas from "../public/images/logo_uas2.png";
 import logoDGES from "../public/images/logo_dges.png";
 import logoVision from "../public/images/logo_administracion.png";
 import Image from "next/image";
 
 export default function Header() {
+    const handleLogout = () => {
+        localStorage.removeItem("auth");
+        document.cookie = "token=; Max-Age=0; path=/;";
+        window.location.href = "/login";
+    };
+
   return (
     <>
     <Grid
@@ -171,6 +178,20 @@ export default function Header() {
                 objectFit: "contain",
                 }}
             />
+                <Tooltip title="Cerrar sesión" placement="right">
+                    <IconButton
+                        onClick={handleLogout}
+                        sx={{
+                        color: "#E8F5E9",
+                        "&:hover": {
+                            color: "#A5D6A7",
+                            backgroundColor: "rgba(255,255,255,0.1)",
+                        },
+                        }}
+                    >
+                        <LogoutIcon />
+                    </IconButton>
+                </Tooltip>
             </Box>
         </Box>
         </Box>
