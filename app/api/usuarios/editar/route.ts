@@ -6,6 +6,7 @@ export async function POST(req: Request) {
 
   try {
     const {
+      Id,
       Nombre,
       Usuario,
       Password,
@@ -13,32 +14,46 @@ export async function POST(req: Request) {
       Permisos = [],
     } = await req.json();
 
-    if (!Nombre || !Usuario || !Password || !RolId) {
+    if (!Id || !Nombre || !Usuario || !RolId) {
       return NextResponse.json(
-        { error: "Faltan datos obligatorios" },
+        { error: "Datos incompletos" },
         { status: 400 }
       );
     }
 
     await connection.beginTransaction();
 
-    // 1. Crear usuario
-    const [userResult]: any = await connection.query(
-      `INSERT INTO usuario (Nombre, Usuario, Password, RolId)
-       VALUES (?, ?, ?, ?)`,
-      [Nombre, Usuario, Password, RolId]
+    // 1. Actualizar usuario
+    if (Password) {
+      await connection.query(
+        `UPDATE usuario
+         SET Nombre = ?, Usuario = ?, Password = ?, RolId = ?
+         WHERE Id = ?`,
+        [Nombre, Usuario, Password, RolId, Id]
+      );
+    } else {
+      await connection.query(
+        `UPDATE usuario
+         SET Nombre = ?, Usuario = ?, RolId = ?
+         WHERE Id = ?`,
+        [Nombre, Usuario, RolId, Id]
+      );
+    }
+
+    // 2. Eliminar permisos existentes
+    await connection.query(
+      `DELETE FROM usuario_permiso WHERE UsuarioId = ?`,
+      [Id]
     );
 
-    const usuarioId = userResult.insertId;
-
-    // 2. Insertar permisos
+    // 3. Insertar permisos nuevos
     for (const p of Permisos) {
       await connection.query(
         `INSERT INTO usuario_permiso
          (UsuarioId, UnidadId, LocalidadId, EscuelaId, CarreraId, TipoPermiso)
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          usuarioId,
+          Id,
           p.UnidadId || 0,
           p.LocalidadId || 0,
           p.EscuelaId || 0,
@@ -50,14 +65,13 @@ export async function POST(req: Request) {
 
     await connection.commit();
 
-    return NextResponse.json(
-      { message: "Usuario creado correctamente", usuarioId },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      message: "Usuario actualizado correctamente",
+    });
   } catch (error: any) {
     await connection.rollback();
     return NextResponse.json(
-      { error: "Error al crear usuario", detail: error.message },
+      { error: "Error al editar usuario", detail: error.message },
       { status: 500 }
     );
   } finally {

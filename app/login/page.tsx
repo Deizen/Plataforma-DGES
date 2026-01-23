@@ -63,29 +63,31 @@ export default function LoginPage() {
 // };
   const handleLogin = async () => {
     setError("");
-    
+
     try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          usuario: user, 
-          password: pass 
-        })
+        credentials: "include",
+        body: JSON.stringify({
+          usuario: user,
+          password: pass,
+        }),
       });
 
       const data = await res.json();
 
-      if (!data.ok) {
-        setError(data.message);
+      // Si el status NO es OK
+      if (!res.ok) {
+        setError(data.error || "Credenciales incorrectas");
         return;
       }
 
-      // Guarda al usuario en localStorage (opcional pero útil)
+      // Login correcto
       localStorage.setItem("user", JSON.stringify(data.user));
-
       router.push("/principal");
-    } catch {
+
+    } catch (err) {
       setError("Error al conectar con el servidor");
     }
   };

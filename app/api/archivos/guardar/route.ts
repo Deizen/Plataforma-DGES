@@ -19,13 +19,22 @@ export async function POST(req: Request) {
 
     // const { nombre, ruta, usuario } = await req.json();
 
-    if (!nombre || !ruta || !unidad || !localidad || !escuela || !carrera || !modalidad || !usuario) {
-      return NextResponse.json(
-        { error: "Datos incompletos" },
-        { status: 400 }
-      );
-    }
+    // if (!nombre || !ruta || !unidad || !localidad || !escuela || !carrera || !modalidad || !usuario) {
+    //   return NextResponse.json(
+    //     { error: "Datos incompletos" },
+    //     { status: 400 }
+    //   );
+    // }
+      const required = { nombre, ruta, unidad, localidad, escuela, carrera, modalidad, usuario };
 
+      for (const [key, value] of Object.entries(required)) {
+        if (value === null || value === undefined) {
+          return NextResponse.json(
+            { error: `Falta el campo: ${key}` },
+            { status: 400 }
+          );
+        }
+}
     const insertQuery = `
       INSERT INTO archivo (Nombre, Ruta, UnidadId, LocalidadId, EscuelaId, CarreraId, ModalidadId, UsuarioId)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)

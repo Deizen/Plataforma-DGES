@@ -1,14 +1,21 @@
 "use client";
 
-import * as React from "react";
+import { CacheProvider } from "@emotion/react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import createCache from "@emotion/cache";
+
+const cache = createCache({ key: "css", prepend: true });
 
 const theme = createTheme({
-  palette: {
-    mode: "light",
-  },
+  palette: { mode: "light" },
 });
 
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return (
+    <CacheProvider value={cache}>
+      <ThemeProvider theme={theme}>
+        {children}
+      </ThemeProvider>
+    </CacheProvider>
+  );
 }

@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "components/FileUploader.jsx", "lib/db.js", "app/api/upload/route.js"  ],
+, "components/FileUploader.jsx", "lib/db.js", "app/api/upload/route.js", "hooks/useUsuarios.js", "app/api/files/[nombre]/route.js"  ],
   "exclude": ["node_modules"]
 }

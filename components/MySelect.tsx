@@ -1,4 +1,4 @@
-"use client"; // 👈 Importante para usar componentes interactivos en Next.js (App Router)
+"use client"; // Importante para usar componentes interactivos en Next.js (App Router)
 import * as React from "react";
 import { MenuItem, ListSubheader } from "@mui/material";
 import Select, { SelectChangeEvent } from "@mui/material/Select";

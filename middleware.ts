@@ -2,26 +2,31 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Rutas permitidas sin login
+  const rutasPublicas = ["/login"];
+
+  // Si la ruta es pública -> permitir
+  if (rutasPublicas.some((ruta) => pathname.startsWith(ruta))) {
+    return NextResponse.next();
+  }
+
+  // Revisar si existe token de sesión
   const token = req.cookies.get("token")?.value;
-  const path = req.nextUrl.pathname;
 
-  const isPublic = path === "/";
-
-  // Si no está autenticado y quiere entrar a una ruta privada → login
-  if (!token && !isPublic) {
-    return NextResponse.redirect(new URL("/", req.url));
+  // Si NO hay token -> redirigir al login
+  if (!token) {
+    const url = new URL("/login", req.url);
+    return NextResponse.redirect(url);
   }
 
-  // Si está autenticado y visita / → dashboard
-  if (token && isPublic) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
+  // Si hay token -> permitir acceso
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api|public).*)",
+    "/((?!login|_next|favicon.ico|api).*)",
   ],
 };

@@ -10,11 +10,13 @@ import logoVision from "../public/images/logo_administracion.png";
 import Image from "next/image";
 
 export default function Header() {
-    const handleLogout = () => {
-        localStorage.removeItem("auth");
-        document.cookie = "token=; Max-Age=0; path=/;";
-        window.location.href = "/login";
-    };
+        const handleLogout = async () => {
+            await fetch("/api/logout", {
+                method: "POST",
+            });
+            localStorage.removeItem("auth");
+            window.location.href = "/login";
+        };
 
   return (
     <>

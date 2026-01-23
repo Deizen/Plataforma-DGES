@@ -18,7 +18,7 @@ const MenuProps = {
   },
 };
 
-// 🔹 Props que recibe el componente
+// Props que recibe el componente
 interface MultipleSelectPlaceholderProps {
   names: string[];
   placeholder?: string;
@@ -56,7 +56,7 @@ export default function MultipleSelectPlaceholder({
         input={<OutlinedInput />}
         renderValue={(selected) => {
           if (selected.length === 0) {
-            return <em>{placeholder}</em>; // 👈 placeholder dinámico
+            return <em>{placeholder}</em>; // placeholder dinámico
           }
           return selected.join(", ");
         }}

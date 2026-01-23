@@ -7,7 +7,7 @@ export default function Sidebar() {
       <h2 className="text-xl font-bold">Panel</h2>
 
       <nav className="flex flex-col space-y-2">
-        <Link href="/">Dashboard</Link>
+        <Link href="/">Pagina</Link>
         <Link href="/carreras">Carreras</Link>
         <Link href="/usuarios">Usuarios</Link>
       </nav>

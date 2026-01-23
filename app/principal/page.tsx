@@ -3,12 +3,14 @@
 import { useState } from "react";
 import * as React from "react";
 import Header from "@/components/Header";
-import Registro from "@/components/RegistroUsuarios";
+//import Registro from "@/components/RegistroUsuarios";
+//import RegistroAntiguo from "@/components/RegistroUsuarios";
+import Registro from "@/components/Registro";
 import Archivos from "@/components/PaginaPrincipal";
 import { Box, Button } from "@mui/material";
 
 export default function Principal() {
-  const [modulo, setModulo] = useState<"archivos" | "registro">("archivos");
+    const [modulo, setModulo] = useState<"archivos" | "registro">("archivos");
     const [rol, setRol] = React.useState(null);
   
     React.useEffect(() => {

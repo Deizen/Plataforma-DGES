@@ -29,3 +29,7 @@ export const carreras = [
   { value: 3, label: "Arquitectura" },
   { value: 4, label: "Derecho" },
 ];
+
+const usuarioEditar = [
+  { value: 1, label: "Administrador",permisos:{carreraid,} },
+]
