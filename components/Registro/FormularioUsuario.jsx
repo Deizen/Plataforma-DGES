@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import Select from "../Select";
 import { useCatalogos } from "@/hooks/useCatalogos";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Tooltip, IconButton } from "@mui/material";
 
 const permisoVacio = {
   UnidadId: "",
@@ -127,13 +129,35 @@ export default function FormularioUsuario({
 
   return (
     <Box sx={{ width: "100%", background: "white", p: 1 }}>
-      <Typography
+      {/* <Typography
         variant="h5"
         sx={{ mb: 2, fontWeight: "bold", color: "#2e7d32" }}
       >
         {usuarioEditar ? "Editar Usuario" : "Registrar Usuario"}
-      </Typography>
+      </Typography> */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Tooltip title="Volver">
+          <IconButton
+            onClick={onCancelar}
+            sx={{ mr: 1 }}
+          >
+            <ArrowBackIcon sx={{ color: "#2e7d32" }} />
+          </IconButton>
+        </Tooltip>
 
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: "bold", color: "#2e7d32" }}
+        >
+          {usuarioEditar ? "Editar Usuario" : "Registrar Usuario"}
+        </Typography>
+      </Box>
       {/* ======================= DATOS ======================= */}
       <Grid container spacing={2} alignItems="stretch">
       {/* ACCESO */}

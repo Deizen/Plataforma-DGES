@@ -10,8 +10,8 @@ import Select from "./Select";
 import Modal from "@/components/Modal"
 import { useCatalogos } from "@/hooks/useCatalogos"; 
 import dynamic from "next/dynamic";
-
-
+import BloqueUploader from "@/components/BloqueUploader";
+import SeccionTexto from "@/components/SeccionTexto";
 
 import { useAuth } from "@/hooks/useAuth";
 import { permission } from "process";
@@ -28,6 +28,30 @@ function matchPermission(value, permisosArray, field) {
 
   // Ver si el valor actual está dentro de lo permitido
   return permittedValues.includes(value);
+}
+
+function obtenerTipoPermiso(permisos, filtros) {
+  if (!permisos || permisos.length === 0) return 2;
+
+  const match = permisos.find((p) =>
+    // Unidad
+    (Number(p.UnidadId) === 0 ||
+      Number(p.UnidadId) === Number(filtros.unidad)) &&
+
+    // Localidad
+    (Number(p.LocalidadId) === 0 ||
+      Number(p.LocalidadId) === Number(filtros.localidad)) &&
+
+    // Escuela
+    (Number(p.EscuelaId) === 0 ||
+      Number(p.EscuelaId) === Number(filtros.escuela)) &&
+
+    // Carrera
+    (Number(p.CarreraId) === 0 ||
+      Number(p.CarreraId) === Number(filtros.carrera))
+  );
+
+  return match ? Number(match.TipoPermiso) : 2;
 }
 
 export default function PaginaPrincipal() {
@@ -53,19 +77,135 @@ export default function PaginaPrincipal() {
   const [permisos, setPermisos] = React.useState(null);
   const [rol, setRol] = React.useState(null);
 
-  React.useEffect(() => {
-    const userData = localStorage.getItem("user");
+  const [autoLoaded, setAutoLoaded] = React.useState(false);
+  const [comentarios, setComentarios] = React.useState("");
+  const [observaciones, setObservaciones] = React.useState("");  
 
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUsuario(parsedUser);
-      setPermisos(parsedUser.permisos);
-      setRol(parsedUser.rolid);
-    }
-  }, []);
+  // React.useEffect(() => {
+  //   const userData = localStorage.getItem("user");
 
+  //   if (userData) {
+  //     const parsedUser = JSON.parse(userData);
+  //     console.log("Usuario cargado desde localStorage:", parsedUser);
+  //     setUsuario(parsedUser);
+  //     setPermisos(parsedUser.permisos);
+  //     setRol(parsedUser.rolid);
+  //   }
+  // }, []);
+
+    React.useEffect(() => {
+      const userData = localStorage.getItem("user");
+
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        // console.log("Usuario cargado desde localStorage:", parsedUser);
+
+        setUsuario(parsedUser);
+        setRol(parsedUser.rolid);
+
+        if (parsedUser.rolid === 1) {
+          const permisosAdmin = [
+            {
+              UnidadId: 0,
+              LocalidadId: 0,
+              EscuelaId: 0,
+              CarreraId: 0,
+              TipoPermiso: 1, 
+            },
+          ];
+
+          setPermisos(permisosAdmin);
+        } else {
+          setPermisos(parsedUser.permisos);
+        }
+      }
+    }, []);
+  
   
   const { unidades, localidades, escuelas, carreras, modalidades } = useCatalogos();
+
+  React.useEffect(() => {
+        // Admin no auto-selecciona
+        if (rol === 1) return;
+
+        // Evitar re-ejecuciones
+        if (
+          autoLoaded ||
+          selectedUnidadRegional ||
+          !rol ||
+          !permisos ||
+          !unidades.length
+        ) {
+          return;
+        }
+
+      // Unidad
+      const unidadesPermitidas =
+        rol === 1
+          ? unidades
+          : unidades.filter(u =>
+              matchPermission(u.value, permisos, "UnidadId")
+            );
+
+      if (!unidadesPermitidas.length) return;
+
+      const unidad = unidadesPermitidas[0];
+      setSelectedUnidadRegional(unidad.value);
+
+      // Localidad
+      const localidadesPermitidas = localidades.filter(loc =>
+        loc.UnidadRegionalId === unidad.value &&
+        (rol === 1 ||
+          matchPermission(loc.value, permisos, "LocalidadId"))
+      );
+
+      if (!localidadesPermitidas.length) return;
+
+      const localidad = localidadesPermitidas[0];
+      setSelectedLocalidad(localidad.value);
+
+      // Escuela
+      const escuelasPermitidas = escuelas.filter(esc =>
+        esc.LocalidadId === localidad.value &&
+        (rol === 1 ||
+          matchPermission(esc.value, permisos, "EscuelaId"))
+      );
+
+      if (!escuelasPermitidas.length) return;
+
+      const escuela = escuelasPermitidas[0];
+      setSelectedEscuela(escuela.value);
+
+      // Carrera
+      const carrerasPermitidas = carreras.filter(car =>
+        car.EscuelaId === escuela.value &&
+        (rol === 1 ||
+          matchPermission(car.value, permisos, "CarreraId"))
+      );
+
+      if (!carrerasPermitidas.length) return;
+
+      const carrera = carrerasPermitidas[0];
+      setSelectedCarrera(carrera.label);
+
+      // Modalidad
+      const modalidad = modalidades.find(
+        m => m.value === carrera.ModalidadId
+      );
+
+      if (modalidad) {
+        setSelectedModalidad(modalidad.value);
+      }
+
+    }, [
+      rol,
+      permisos,
+      unidades,
+      localidades,
+      escuelas,
+      carreras,
+      modalidades
+    ]);
 
   // Unidades
   const filteredUnidades = rol === 1
@@ -81,7 +221,7 @@ const filteredLocalidades =
           : true
       )
     : localidades.filter(loc =>
-        // 1Debe pertenecer a la unidad seleccionada
+        // Debe pertenecer a la unidad seleccionada
         (!selectedUnidadRegional ||
           loc.UnidadRegionalId === selectedUnidadRegional) &&
         // Debe estar en los permisos
@@ -150,6 +290,17 @@ const filteredCarreras =
   const carreraId = carreraSeleccionada?.value; // este es el ID de la carrera
   const usuarioId = usuario?.usuario;
 
+  const tipoPermiso = obtenerTipoPermiso(permisos, {
+    unidad: selectedUnidadRegional,
+    localidad: selectedLocalidad,
+    escuela: selectedEscuela,
+    carrera: carreraSeleccionada?.value,
+  });
+
+  const soloLectura = tipoPermiso === 2; // Si es solo lectura o no es admin
+
+  console.log("Tipo Permiso:", tipoPermiso, "Solo Lectura:", soloLectura);
+
   // Función para subir y guardar archivos
   const handleUpload = async () => {
   const formData = new FormData();
@@ -175,7 +326,7 @@ const filteredCarreras =
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         nombre: file.nombreOriginal,   // usar el nombre real
-        ruta: file.ruta,               // "uploads/..."
+        ruta: file.ruta,               
         unidad: selectedUnidadRegional,
         localidad: selectedLocalidad,
         escuela: selectedEscuela,
@@ -215,6 +366,8 @@ const filteredCarreras =
     ) {
       // Esta parte llama al backend
       cargarArchivosSubidos();
+      obtenerComentarios();
+      obtenerObservaciones();
     }
   }, [
     selectedUnidadRegional,
@@ -287,6 +440,88 @@ const filteredCarreras =
     }
   };
 
+    // guardar comentario
+    const handleGuardarComentario = async () => {
+      if (!comentarios.trim()) return;
+
+      const res = await fetch("/api/comentarios/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contenido: comentarios,
+          unidad: selectedUnidadRegional,
+          localidad: selectedLocalidad,
+          escuela: selectedEscuela,
+          carrera: carreraId,
+          modalidad: selectedModalidad,
+          usuario: usuarioId,
+        }),
+      });
+
+
+        const data = await res.json();
+
+        if (data.success) {
+          obtenerComentarios();
+        }
+    };
+
+    // guardar observacion
+    const handleGuardarObservacion = async () => {
+      if (!observaciones.trim()) return;
+
+      const res = await fetch("/api/observaciones/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contenido: observaciones,
+          unidad: selectedUnidadRegional,
+          localidad: selectedLocalidad,
+          escuela: selectedEscuela,
+          carrera: carreraId,
+          modalidad: selectedModalidad,
+          usuario: usuarioId,
+        }),
+      });
+
+
+      const data = await res.json();
+
+      if (data.success) {
+        obtenerObservaciones();
+      }
+    };
+
+    // obtener comentarios
+    const obtenerComentarios = async () => {
+      const res = await fetch(
+        `/api/comentarios/obtener?unidad=${selectedUnidadRegional}&localidad=${selectedLocalidad}&escuela=${selectedEscuela}&carrera=${carreraId}&modalidad=${selectedModalidad}`
+      );
+
+      const data = await res.json();
+
+      if (data.length > 0) {
+        setComentarios(data[0].Contenido); // 👈 SOLO STRING
+      } else {
+        setComentarios("");
+      }
+    };
+
+    // obtener observaciones
+    const obtenerObservaciones = async () => {
+      const res = await fetch(
+        `/api/observaciones/obtener?unidad=${selectedUnidadRegional}&localidad=${selectedLocalidad}&escuela=${selectedEscuela}&carrera=${carreraId}&modalidad=${selectedModalidad}`
+      );
+
+      const data = await res.json();
+
+      if (data.length > 0) {
+        setObservaciones(data[0].Contenido); // 👈 SOLO STRING
+      } else {
+        setObservaciones("");
+      }
+    };
+
     const confirmarEliminacion = () => {
       if (fileToDelete !== null) {
         eliminarArchivo(fileToDelete); // Ejecuta tu API
@@ -298,9 +533,8 @@ const filteredCarreras =
 
   return (
     <Box sx={{ width: "100%", background: "linear-gradient(to right, #1d70b8, #0c3b74)", m: 0, p: 0 }}>
-      {/* Bloques 2 */}
       <Grid container spacing={1} sx={{ background: "linear-gradient(to right, #1d70b8, #0c3b74)", p: 3, borderRadius: 3, mb: 1 }}>
-        <Grid item xs={12} sm={3}>
+        <Grid item xs={12} sm={2}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
                     options={filteredUnidades}
@@ -316,7 +550,7 @@ const filteredCarreras =
                 />
           </Box>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid item xs={12} sm={2}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
                     options={filteredLocalidades}
@@ -345,7 +579,7 @@ const filteredCarreras =
                 />
           </Box>
         </Grid>
-        <Grid item xs={12} sm={5}>
+        <Grid item xs={12} sm={3}>
           <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
                     options={carrerasUnicas}
@@ -358,7 +592,7 @@ const filteredCarreras =
                 />
           </Box>
         </Grid>
-        <Grid item xs={12} sm={5}>
+        <Grid item xs={12} sm={2}>
           {selectedCarrera ? (
             <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
                 <Select
@@ -396,97 +630,54 @@ const filteredCarreras =
         </Box>
       ) : (
         <>
-        <Grid
+        {/* <Grid
           container
           spacing={2}
-          sx={{ bgcolor: "#e8f5e9", p: 3, borderRadius: 0.5, mb: 4   }}
+          alignItems="stretch"
+          sx={{
+            bgcolor: "#e8f5e9",
+            p: 3,
+            borderRadius: 0.5,
+            outline: "2px solid red",
+            mb: 4,
+            width: "100%",
+            m: 0,           
+          }}
+        > */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(4, 1fr)",
+            },
+            gap: 2,
+            bgcolor: "#e8f5e9",
+            p: 3,
+            borderRadius: 0.5,
+            mb: 4,
+            width: "100%",
+            boxSizing: "border-box",
+          }}
         >
-
           {/* Bloque de selección de archivos */}
-        <Grid item xs={12} md={3}>
-          <Box
-            sx={{
-              bgcolor: "#66bb6a",
-              p: 3,
-              borderRadius: 2,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              textAlign: "center",
-            }}
-          >
-            {/*Uploader (solo selección, no subida automática) */}
-            <FileUploader
-              showFiles={false}
-              clearSignal={clearUploader}
-              onUpload={(files) => {
-                setPendingFiles(files); // guarda temporalmente
-              }}
-            />
-
-            {/* Lista de archivos listos para subir */}
-            {pendingFiles.length > 0 && (
-              <Box
-                sx={{
-                  width: "100%",
-                  mt: 2,
-                  bgcolor: "rgba(255,255,255,0.2)",
-                  borderRadius: 2,
-                  p: 1,
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ color: "#fff", mb: 1 }}>
-                  Archivos listos para subir:
-                </Typography>
-                <List dense>
-                  {pendingFiles.map((file, index) => (
-                    <ListItem key={index} sx={{ color: "#fff" }}>
-                      <ListItemIcon>
-                        <InsertDriveFileIcon sx={{ color: "#2e7d32" }} />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={file.name}
-                        primaryTypographyProps={{
-                          fontSize: 13,
-                          sx: { color: "#fff", wordBreak: "break-all" },
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            )}
-
-            {/* Botón separado (activo solo si hay archivos) */}
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{
-                mt: 2,
-                py: 1.2,
-                fontWeight: "bold",
-                bgcolor: pendingFiles.length > 0 ? "#2e7d32" : "#9e9e9e",
-                boxShadow: pendingFiles.length > 0 ? "0px 0px 10px rgba(46,125,50,0.6)" : "none",
-                transform: pendingFiles.length > 0 ? "scale(1.03)" : "scale(1)",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  bgcolor: pendingFiles.length > 0 ? "#1b5e20" : "#9e9e9e",
-                  transform: pendingFiles.length > 0 ? "scale(1.06)" : "scale(1)",
-                },
-              }}
-              disabled={pendingFiles.length === 0}
-              onClick={handleUpload}
-            >
-              Subir Archivos
-            </Button>
-          </Box>
-        </Grid>
+        {/* <Grid item xs={12} md={3}> */}
+        {!soloLectura && (
+          <BloqueUploader
+            pendingFiles={pendingFiles}
+            setPendingFiles={setPendingFiles}
+            handleUpload={handleUpload}
+            clearUploader={clearUploader}
+          />
+        )}
+          
+        {/* </Grid> */}
 
           {/* Bloque de archivos subidos */}
-          <Grid item xs={12} md={6}>
-            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2 }}>
+          {/* <Grid item xs={12} md={3}> */}
+            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2,alignSelf: "start", }}>
+          {/* <Grid item xs={12} md={3}>
+            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2 }}> */}
               <Typography variant="h5" fontWeight="bold" mb={2}>
                 Archivos Subidos
               </Typography>
@@ -537,17 +728,20 @@ const filteredCarreras =
                       >
                         {file.name}
                       </Typography>
-                        <IconButton
-                          size="small"
-                          sx={{ color: "#e53935" }}
-                          // onClick={() => eliminarArchivo(file.id)}
-                            onClick={() => {
-                              setFileToDelete(file.id);   // Guardamos qué archivo vamos a borrar
-                              setModalOpen(true);         // Abrimos el modal
-                            }}
-                        >
-                          ✕
-                        </IconButton>
+                        {!soloLectura && (
+                          <IconButton
+                            size="small"
+                            sx={{ color: "#e53935" }}
+                            // onClick={() => eliminarArchivo(file.id)}
+                              onClick={() => {
+                                setFileToDelete(file.id);   // Guardamos qué archivo vamos a borrar
+                                setModalOpen(true);         // Abrimos el modal
+                              }}
+                            disabled={soloLectura}
+                          >
+                            ✕
+                          </IconButton>
+                        )}
                         <Modal
                           open={modalOpen}
                           onClose={() => setModalOpen(false)}
@@ -563,8 +757,45 @@ const filteredCarreras =
                 </Typography>
               )}
             </Box>
-          </Grid>
-        </Grid>
+          {/* </Grid> */}
+          {/* Comentarios */}
+          {/* <Grid item xs={12} md={3}> */}
+            <Box
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+              <SeccionTexto
+                title="Comentarios"
+                value={comentarios}
+                onChange={setComentarios}
+                placeholder="Escribe aquí los comentarios del archivo..."
+                onSave={handleGuardarComentario}
+                readOnly={soloLectura}
+              />
+            </Box>
+          {/* </Grid> */}
+
+          {/* Observaciones */}
+              <Box
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+              <SeccionTexto
+                title="Observaciones"
+                value={observaciones}
+                onChange={setObservaciones}
+                placeholder="Escribe aquí observaciones adicionales..."
+                onSave={handleGuardarObservacion}
+                readOnly={rol !== 1 || soloLectura}
+              />
+            </Box>
+        </Box>
         </>
         )}
     </Box>
