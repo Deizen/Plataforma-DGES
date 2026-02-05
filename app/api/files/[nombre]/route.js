@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
 
   const fileBuffer = fs.readFileSync(filePath);
 
-  // Obtener MIME por extensión
+  // Obtener por extensión
   const ext = path.extname(fileName).toLowerCase();
   const mimeMap = {
     ".pdf": "application/pdf",

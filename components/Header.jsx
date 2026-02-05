@@ -26,8 +26,8 @@ export default function Header() {
         sx={{
         background: "linear-gradient(to right, #1d70b8, #0c3b74)",
         p: 0,
-        height: "115px", // altura total de la franja superior
-        position: "relative", // ¡CLAVE para que el 'absolute' funcione!
+        height: "115px", 
+        position: "relative", 
         }}
         >
             {/* --- IZQUIERDA: Logo UAS (md={2}) --- */}
@@ -70,10 +70,10 @@ export default function Header() {
             xs={12}
             md={10} 
             display="flex"
-            justifyContent="flex-start"  // **CLAVE 1: Alineamos a la izquierda** para que el texto inicie después del margen
+            justifyContent="flex-start"  
             alignItems="center"
             sx={{ 
-                ml: { md: 3 }, // Ajusta este valor (3, 4, 5, etc.) para la separación ideal
+                ml: { md: 3 }, 
                 pr: { md: '300px' }, 
                 mb:3,
             }} 
@@ -125,7 +125,6 @@ export default function Header() {
         {/* --- DERECHA EXTREMA: GRUPO DGES y VISIÓN (Posicionamiento Absoluto) --- */}
         <Box
         sx={{
-            // ** CLAVE: Saca los logos del flujo del Grid **
             position: "absolute",
             right: 10, 
             top: 0,
@@ -175,7 +174,7 @@ export default function Header() {
                 src={logoVision}
                 alt="Logo Vision"
                 style={{
-                height: "100%", // Puedes ajustar este porcentaje
+                height: "100%", 
                 width: "auto",
                 objectFit: "contain",
                 }}

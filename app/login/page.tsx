@@ -77,7 +77,6 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      // Si el status NO es OK
       if (!res.ok) {
         setError(data.error || "Credenciales incorrectas");
         return;

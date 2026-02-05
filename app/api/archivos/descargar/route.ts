@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Falta ruta" }, { status: 400 });
   }
 
-  // Normaliza la ruta por seguridad (evita ../../../ etc)
+  // Normaliza la ruta por seguridad 
   const fileName = path.basename(ruta);
   const filePath = path.join(process.cwd(), "storage", "uploads", fileName);
 

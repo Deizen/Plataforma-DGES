@@ -19,7 +19,7 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
-import FormularioUsuario from "./FormularioUsuario";   // <-- tu form actual separado
+import FormularioUsuario from "./FormularioUsuario";   
 
 export default function RegistroUsuarios() {
   const [vista, setVista] = useState("lista"); // "lista" | "form"

@@ -37,9 +37,9 @@ export default function Principal() {
           gap: "5px",
           fontSize: "1.1rem",
           fontWeight: 500,
-          color: "white", // Esto aplica al texto dentro de Box
+          color: "white", 
             "& .MuiButton-root": {
-            color: "white", // Esto fuerza que los botones tengan texto blanco
+            color: "white", 
     },
         }}
       >

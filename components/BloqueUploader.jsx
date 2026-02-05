@@ -10,7 +10,7 @@ export default React.memo(function BloqueUploader({
   handleUpload,
   clearUploader,
 }) {
-  console.log("RENDER UPLOADER");
+
 
   return (
     <Box

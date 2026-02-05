@@ -81,24 +81,12 @@ export default function PaginaPrincipal() {
   const [comentarios, setComentarios] = React.useState("");
   const [observaciones, setObservaciones] = React.useState("");  
 
-  // React.useEffect(() => {
-  //   const userData = localStorage.getItem("user");
-
-  //   if (userData) {
-  //     const parsedUser = JSON.parse(userData);
-  //     console.log("Usuario cargado desde localStorage:", parsedUser);
-  //     setUsuario(parsedUser);
-  //     setPermisos(parsedUser.permisos);
-  //     setRol(parsedUser.rolid);
-  //   }
-  // }, []);
 
     React.useEffect(() => {
       const userData = localStorage.getItem("user");
 
       if (userData) {
         const parsedUser = JSON.parse(userData);
-        // console.log("Usuario cargado desde localStorage:", parsedUser);
 
         setUsuario(parsedUser);
         setRol(parsedUser.rolid);
@@ -274,10 +262,10 @@ const filteredCarreras =
   filteredCarreras
     .filter(car => car.label === selectedCarrera)
    //.map(car => modalidades.find(m => m.value === car.ModalidadId))
-   // Aquí pueden haber duplicados
+
    .reduce((acc, car) => {
      const modalidad = modalidades.find(m => m.value === car.ModalidadId);
-     if (modalidad) acc[modalidad.value] = modalidad;  // ← evita duplicados
+     if (modalidad) acc[modalidad.value] = modalidad;  
      return acc;
    }, {})
 );
@@ -298,8 +286,6 @@ const filteredCarreras =
   });
 
   const soloLectura = tipoPermiso === 2; // Si es solo lectura o no es admin
-
-  console.log("Tipo Permiso:", tipoPermiso, "Solo Lectura:", soloLectura);
 
   // Función para subir y guardar archivos
   const handleUpload = async () => {
@@ -405,12 +391,7 @@ const filteredCarreras =
         url: `/api/archivos/descargar?ruta=${encodeURIComponent(a.Ruta)}`
       }));
 
-      // // Transformar archivos a lo que usa tu frontend
-      // const mapped = data.archivos.map((a) => ({
-      //   id: a.Id,
-      //   name: a.Nombre,
-      //   url: a.Ruta,
-      // }));
+
 
       setUploadedFiles(mapped);
       setPendingFiles([]);
@@ -516,7 +497,7 @@ const filteredCarreras =
       const data = await res.json();
 
       if (data.length > 0) {
-        setObservaciones(data[0].Contenido); // 👈 SOLO STRING
+        setObservaciones(data[0].Contenido); 
       } else {
         setObservaciones("");
       }
@@ -524,12 +505,23 @@ const filteredCarreras =
 
     const confirmarEliminacion = () => {
       if (fileToDelete !== null) {
-        eliminarArchivo(fileToDelete); // Ejecuta tu API
+        eliminarArchivo(fileToDelete); 
       }
 
       setModalOpen(false);  // Cerramos el modal
       setFileToDelete(null); // Limpiamos
     };
+
+    const camposSeleccionados = {
+      unidad: selectedUnidadRegional,
+      localidad: selectedLocalidad,
+      escuela: selectedEscuela,
+      carrera: selectedCarrera,
+      modalidad: selectedModalidad,
+    };
+
+    const filtrosCompletos = Object.values(camposSeleccionados).every(v => v);
+    
 
   return (
     <Box sx={{ width: "100%", background: "linear-gradient(to right, #1d70b8, #0c3b74)", m: 0, p: 0 }}>
@@ -610,7 +602,7 @@ const filteredCarreras =
       </Grid>
 
       {/* Bloques 3 */}
-      {!selectedModalidad ? (
+      {!filtrosCompletos ? (
         <Box
           sx={{
             p: 4,

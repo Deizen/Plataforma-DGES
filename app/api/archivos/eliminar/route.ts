@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         process.cwd(),
         "storage",
         "uploads",
-        path.basename(filePath) // <-- evita rutas raras
+        path.basename(filePath) 
       );
 
     try {
