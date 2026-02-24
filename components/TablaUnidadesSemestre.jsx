@@ -116,7 +116,6 @@ export default function TablaUnidadesSemestre({
     });
   };
 
-console.log("rows", rows);
 
   return (
     <Box

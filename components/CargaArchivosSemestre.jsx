@@ -27,7 +27,6 @@
   }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [fileToDelete, setFileToDelete] = useState(null);
-    console.log("uploadedFiles en CargaArchivosSemestre:", uploadedFiles);
     const eliminarArchivo = async (id) => {
       try {
         const res = await fetch("/api/archivos/eliminar", {

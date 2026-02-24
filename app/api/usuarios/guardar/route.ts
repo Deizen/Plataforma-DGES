@@ -13,13 +13,6 @@ export async function POST(req: Request) {
       Permisos = [],
     } = await req.json();
 
-    console.log("Datos recibidos:", {
-      Nombre,
-      Usuario,
-      Password: Password ? "****" : null, // No mostrar el password en los logs
-      RolId,
-      Permisos,
-    }); 
 
     if (!Nombre || !Usuario || !Password || !RolId) {
       return NextResponse.json(
