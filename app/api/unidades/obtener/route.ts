@@ -1,6 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { RowDataPacket } from "mysql2";
 
-export async function GET(req) {
+export const runtime = "nodejs";
+
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const unidad = searchParams.get("unidad");
@@ -10,13 +14,16 @@ export async function GET(req) {
   const modalidad = searchParams.get("modalidad");
   const semestre = searchParams.get("semestre");
 
-  const [rows] = await db.query(`
+  const [rows] = await db.query<RowDataPacket[]>(
+    `
     SELECT us.*, ua.Nombre AS UnidadNombre
     FROM unidad_semestre us
     JOIN unidades_aprendizaje ua ON ua.Id = us.UnidadAprendizajeId
     WHERE us.UnidadId=? AND us.LocalidadId=? AND us.EscuelaId=? 
       AND us.CarreraId=? AND us.ModalidadId=? AND us.Semestre=?
-  `,[unidad,localidad,escuela,carrera,modalidad,semestre]);
+    `,
+    [unidad, localidad, escuela, carrera, modalidad, semestre]
+  );
 
-  return Response.json(rows);
+  return NextResponse.json(rows);
 }

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { RowDataPacket } from "mysql2";
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const data = await req.json();
 
@@ -16,12 +17,11 @@ export async function POST(req) {
     } = data;
 
     // Verificamos si ya existe registro
-    const [existe] = await db.query(
-      `SELECT Id FROM UnidadesSemestreProceso 
-       WHERE UnidadAprendizajeId = ? AND Semestre = ?`,
-      [unidadId, semestre]
+    const [existe] = await db.query<RowDataPacket[]>(
+    `SELECT Id FROM UnidadesSemestreProceso 
+    WHERE UnidadAprendizajeId = ? AND Semestre = ?`,
+    [unidadId, semestre]
     );
-
     if (existe.length > 0) {
       await db.query(
         `UPDATE UnidadesSemestreProceso SET

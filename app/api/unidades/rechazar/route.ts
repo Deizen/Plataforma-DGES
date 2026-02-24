@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-export async function POST(req) {
+export async function POST(req: Request) {
   const { id, motivo, adminId } = await req.json();
 
   await db.query(`
