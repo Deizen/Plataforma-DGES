@@ -7,11 +7,15 @@ import { Grid, Box,Button, Typography,IconButton,List, ListItem, ListItemIcon, L
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import BlockIcon from "@mui/icons-material/Block";
 import Select from "./Select";
-import Modal from "@/components/Modal"
+import Modal from "@/components/ModalConfirm"
 import { useCatalogos } from "@/hooks/useCatalogos"; 
 import dynamic from "next/dynamic";
 import BloqueUploader from "@/components/BloqueUploader";
 import SeccionTexto from "@/components/SeccionTexto";
+import CargaArchivosSemestre from "@/components/CargaArchivosSemestre";
+import TablaUnidadesSemestre from "@/components/TablaUnidadesSemestre";
+import Trayectorias from "@/components/Trayectorias";
+import BloqueSeccion from "@/components/BloqueSeccion";
 
 import { useAuth } from "@/hooks/useAuth";
 import { permission } from "process";
@@ -53,8 +57,8 @@ function obtenerTipoPermiso(permisos, filtros) {
 
   return match ? Number(match.TipoPermiso) : 2;
 }
-
-export default function PaginaPrincipal() {
+// export default function PaginaPrincipal() {
+export default function PaginaPrincipal({ tipoModulo = "archivos" }) {
   // const [unidadesRegionales, setUnidadesRegionales] = React.useState([]); // Datos cargados desde el servidor
   const FileUploader = dynamic(() => import("./FileUploader"), {
     ssr: false,
@@ -68,6 +72,7 @@ export default function PaginaPrincipal() {
   const [selectedEscuela, setSelectedEscuela] = React.useState("");
   const [selectedCarrera, setSelectedCarrera] = React.useState("");
   const [selectedModalidad, setSelectedModalidad] = React.useState(""); 
+  const [selectedSemestre, setSelectedSemestre] = React.useState("");
 
   const [clearUploader, setClearUploader] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -81,6 +86,9 @@ export default function PaginaPrincipal() {
   const [comentarios, setComentarios] = React.useState("");
   const [observaciones, setObservaciones] = React.useState("");  
 
+  const semestresCarrera = [
+    { label: "Semestre 6", value: 6 },
+    ];
 
     React.useEffect(() => {
       const userData = localStorage.getItem("user");
@@ -522,274 +530,235 @@ const filteredCarreras =
 
     const filtrosCompletos = Object.values(camposSeleccionados).every(v => v);
     
+    const cardStyle = {
+      bgcolor: "rgba(255,255,255,0.95)",
+      p: 2.5,
+      borderRadius: 3,
+      boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+      transition: "all 0.3s ease",
+      "&:hover": {
+        transform: "translateY(-3px)",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+      },
+    };
 
   return (
     <Box sx={{ width: "100%", background: "linear-gradient(to right, #1d70b8, #0c3b74)", m: 0, p: 0 }}>
-      <Grid container spacing={1} sx={{ background: "linear-gradient(to right, #1d70b8, #0c3b74)", p: 3, borderRadius: 3, mb: 1 }}>
-        <Grid item xs={12} sm={2}>
-          <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
+      <Box
+        sx={{
+          width: "100%",
+          background: "linear-gradient(to right, #1d70b8, #0c3b74)",
+          position: "relative",
+        }}
+      >
+        {/* ===== RENGLÓN 1 ========= */}
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            backdropFilter: "blur(6px)",
+            background: "linear-gradient(to right, #1d70b8, #0c3b74)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          }}
+        >
+          <Grid container spacing={3} sx={{ p: 3 }}>
+            <Grid item xs={12} md={4}>
+              <Box sx={cardStyle}>
                 <Select
-                    options={filteredUnidades}
-                    value={selectedUnidadRegional}
-                    onChange={(value) => {
+                  options={filteredUnidades}
+                  value={selectedUnidadRegional}
+                  onChange={(value) => {
                     setSelectedUnidadRegional(value);
-                    setSelectedLocalidad(""); // reset siguientes niveles
+                    setSelectedLocalidad("");
                     setSelectedEscuela("");
                     setSelectedCarrera("");
                     setSelectedModalidad("");
-                    }}
-                    label="Selecciona una unidad regional..."
+                    setSelectedSemestre("");
+                  }}
+                  label="Selecciona una unidad regional..."
                 />
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={2}>
-          <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Box sx={cardStyle}>
                 <Select
-                    options={filteredLocalidades}
-                    value={selectedLocalidad}
-                    onChange={(value) => {
+                  options={filteredLocalidades}
+                  value={selectedLocalidad}
+                  onChange={(value) => {
                     setSelectedLocalidad(value);
                     setSelectedEscuela("");
                     setSelectedCarrera("");
                     setSelectedModalidad("");
-                    }}
-                    label="Selecciona una localidad..."
+                    setSelectedSemestre("");
+                  }}
+                  label="Selecciona una localidad..."
                 />
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Box sx={cardStyle}>
                 <Select
-                    options={filteredEscuelas}
-                    value={selectedEscuela}
-                    onChange={(value) => {
+                  options={filteredEscuelas}
+                  value={selectedEscuela}
+                  onChange={(value) => {
                     setSelectedEscuela(value);
                     setSelectedCarrera("");
                     setSelectedModalidad("");
-                    }}
-                    label="Selecciona una facultad..."
+                    setSelectedSemestre("");
+                  }}
+                  label="Selecciona una facultad..."
                 />
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* ========================= */}
+        {/* ===== RENGLÓN 2 ========= */}
+        {/* ========================= */}
+        <Box
+          sx={{
+            overflow: "hidden",
+            transition: "all 0.4s ease",
+            opacity: selectedEscuela ? 1 : 0,
+            transform: selectedEscuela
+              ? "translateY(0px)"
+              : "translateY(-15px)",
+            maxHeight: selectedEscuela ? "500px" : "0px",
+          }}
+        >
+          <Grid container spacing={3} sx={{ px: 3, pb: 4 }}>
+            <Grid item xs={12} md={4}>
+              <Box sx={cardStyle}>
                 <Select
-                    options={carrerasUnicas}
-                    value={selectedCarrera}
-                    onChange={(value) => {
+                  options={carrerasUnicas}
+                  value={selectedCarrera}
+                  onChange={(value) => {
                     setSelectedCarrera(value);
                     setSelectedModalidad("");
-                    }}
-                    label="Selecciona una carrera..."
-                />
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={2}>
-          {selectedCarrera ? (
-            <Box sx={{ bgcolor: "#e9e9f5", p: 2, borderRadius: 2 }}>
-                <Select
-                    options={modalidadesCarrera}
-                    value={selectedModalidad}
-                    onChange={(value) => {
-                      setSelectedModalidad(value);
-                      setUploadedFiles([]); // Limpia inmediatamente
-                    }}
-                    label="Selecciona una modalidad..."
-                />
-            </Box>
-          ) : null}
-        </Grid>
-      </Grid>
-
-      {/* Bloques 3 */}
-      {!filtrosCompletos ? (
-        <Box
-          sx={{
-            p: 4,
-            textAlign: "center",
-            bgcolor: "#e8f5e9",
-            borderRadius: 0.5,
-            mt: 2,
-          }}
-        >
-          <BlockIcon sx={{ fontSize: 60, color: "#0c3b74" }} />
-          <Typography variant="h6" sx={{ color: "#1d70b8", fontWeight: "bold", mt: 2 }}>
-            Sección bloqueada
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#1d70b8" }}>
-            Selecciona todos los filtros para mostrar la sección de archivos.
-          </Typography>
-        </Box>
-      ) : (
-        <>
-        {/* <Grid
-          container
-          spacing={2}
-          alignItems="stretch"
-          sx={{
-            bgcolor: "#e8f5e9",
-            p: 3,
-            borderRadius: 0.5,
-            outline: "2px solid red",
-            mb: 4,
-            width: "100%",
-            m: 0,           
-          }}
-        > */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "repeat(4, 1fr)",
-            },
-            gap: 2,
-            bgcolor: "#e8f5e9",
-            p: 3,
-            borderRadius: 0.5,
-            mb: 4,
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          {/* Bloque de selección de archivos */}
-        {/* <Grid item xs={12} md={3}> */}
-        {!soloLectura && (
-          <BloqueUploader
-            pendingFiles={pendingFiles}
-            setPendingFiles={setPendingFiles}
-            handleUpload={handleUpload}
-            clearUploader={clearUploader}
-          />
-        )}
-          
-        {/* </Grid> */}
-
-          {/* Bloque de archivos subidos */}
-          {/* <Grid item xs={12} md={3}> */}
-            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2,alignSelf: "start", }}>
-          {/* <Grid item xs={12} md={3}>
-            <Box sx={{ bgcolor: "#81c784", p: 3, borderRadius: 2 }}> */}
-              <Typography variant="h5" fontWeight="bold" mb={2}>
-                Archivos Subidos
-              </Typography>
-
-              {uploadedFiles.length > 0 ? (
-                <Box
-                  component="ul"
-                  sx={{
-                    listStyle: "none",
-                    m: 0,
-                    p: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
+                    setSelectedSemestre("");
                   }}
-                >
-                  {uploadedFiles.map((file, index) => (
-                    <Box
-                      key={index}
-                      component="li"
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        bgcolor: "white",
-                        borderRadius: 1,
-                        p: 1.2,
-                        boxShadow: 1,
-                        transition: "0.3s",
-                        "&:hover": {
-                          bgcolor: "#f1f8e9",
-                          transform: "translateY(-2px)",
-                        },
-                      }}
-                    >
-                      <InsertDriveFileIcon sx={{ color: "#388e3c", mr: 1 }} />
-                      <Typography
-                        component="a"
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{
-                          color: "#2e7d32",
-                          textDecoration: "none",
-                          fontWeight: 500,
-                          flexGrow: 1,
-                          "&:hover": { textDecoration: "underline" },
-                        }}
-                      >
-                        {file.name}
-                      </Typography>
-                        {!soloLectura && (
-                          <IconButton
-                            size="small"
-                            sx={{ color: "#e53935" }}
-                            // onClick={() => eliminarArchivo(file.id)}
-                              onClick={() => {
-                                setFileToDelete(file.id);   // Guardamos qué archivo vamos a borrar
-                                setModalOpen(true);         // Abrimos el modal
-                              }}
-                            disabled={soloLectura}
-                          >
-                            ✕
-                          </IconButton>
-                        )}
-                        <Modal
-                          open={modalOpen}
-                          onClose={() => setModalOpen(false)}
-                          onConfirm={confirmarEliminacion}
-                          fileName={uploadedFiles.find(f => f.id === fileToDelete)?.nombre}
-                        />
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Typography variant="body2">
-                  No hay archivos subidos aún.
-                </Typography>
-              )}
-            </Box>
-          {/* </Grid> */}
-          {/* Comentarios */}
-          {/* <Grid item xs={12} md={3}> */}
-            <Box
-                sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-              <SeccionTexto
-                title="Comentarios"
-                value={comentarios}
-                onChange={setComentarios}
-                placeholder="Escribe aquí los comentarios del archivo..."
-                onSave={handleGuardarComentario}
-                readOnly={soloLectura}
-              />
-            </Box>
-          {/* </Grid> */}
+                  label="Selecciona una carrera..."
+                />
+              </Box>
+            </Grid>
 
-          {/* Observaciones */}
-              <Box
-                sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-              <SeccionTexto
-                title="Observaciones"
-                value={observaciones}
-                onChange={setObservaciones}
-                placeholder="Escribe aquí observaciones adicionales..."
-                onSave={handleGuardarObservacion}
-                readOnly={rol !== 1 || soloLectura}
-              />
-            </Box>
+            {selectedCarrera && (
+              <>
+                <Grid item xs={12} md={4}>
+                  <Box sx={cardStyle}>
+                    <Select
+                      options={modalidadesCarrera}
+                      value={selectedModalidad}
+                      onChange={(value) => {
+                        setSelectedModalidad(value);
+                        setUploadedFiles([]);
+                      }}
+                      label="Selecciona una modalidad..."
+                    />
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Box sx={cardStyle}>
+                    <Select
+                      options={semestresCarrera}
+                      value={selectedSemestre}
+                      onChange={(value) => {
+                        setSelectedSemestre(value);
+                      }}
+                      label="Selecciona un semestre..."
+                    />
+                  </Box>
+                </Grid>
+              </>
+            )}
+          </Grid>
         </Box>
-        </>
+      </Box>
+
+      {/* Bloque 3 */}
+        <BloqueSeccion
+          visible={
+            !carreraId ||
+            !selectedModalidad ||
+            !selectedSemestre
+          }
+        />
+
+        {/* TABLA */}
+        {carreraId && selectedModalidad && selectedSemestre && (
+          <>
+            {tipoModulo === "archivos" && (
+              <TablaUnidadesSemestre
+                carreraId={carreraId}
+                modalidadId={selectedModalidad}
+                semestreId={selectedSemestre}
+                tipoPermiso={tipoPermiso}
+                esAdmin={rol === 1}
+              />
+            )}
+
+            {(tipoModulo === "planDesarrollo" ||
+              tipoModulo === "planeacion") && (
+                <CargaArchivosSemestre
+                  filtrosCompletos={
+                    carreraId &&
+                    selectedModalidad &&
+                    selectedSemestre
+                  }
+                  soloLectura={soloLectura}
+                  rol={rol}
+                  pendingFiles={pendingFiles}
+                  setPendingFiles={setPendingFiles}
+                  handleUpload={handleUpload}
+                  clearUploader={clearUploader}
+                  uploadedFiles={uploadedFiles}
+                  setUploadedFiles={setUploadedFiles}
+                  comentarios={comentarios}
+                  setComentarios={setComentarios}
+                  observaciones={observaciones}
+                  setObservaciones={setObservaciones}
+                  handleGuardarComentario={handleGuardarComentario}
+                  handleGuardarObservacion={handleGuardarObservacion}
+                  confirmarEliminacion={confirmarEliminacion}
+                />
+
+            )}
+            {tipoModulo === "trayectorias" && (
+              <Trayectorias
+                filtrosCompletos={
+                  carreraId &&
+                  selectedModalidad &&
+                  selectedSemestre
+                }
+                soloLectura={soloLectura}
+              />
+            )}
+          </>
         )}
+
+        {/* {carreraId && selectedModalidad && selectedSemestre && (
+          <TablaUnidadesSemestre
+            carreraId={carreraId}
+            modalidadId={selectedModalidad}
+            semestreId={selectedSemestre}
+            tipoPermiso={tipoPermiso}
+            esAdmin={rol === 1}
+          />
+        )} */}
+     {/* {selectedSemestre && (
+        <TablaUnidadesSemestre
+          carreraId={carreraId}
+          modalidadId={selectedModalidad}
+          semestreId={selectedSemestre}
+          tipoPermiso={tipoPermiso}
+          esAdmin={rol === 1}
+        />
+      )} */}
     </Box>
   );
 }

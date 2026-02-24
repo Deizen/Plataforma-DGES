@@ -75,17 +75,17 @@ export default function FileUploader({ onUpload, showFiles = true }) {
   return (
     <Box
       sx={{
-        bgcolor: isDragging
-          ? "rgba(255,255,255,0.3)"
-          : "rgba(255, 255, 255, 0.2)",
-        border: isDragging ? "2px solid #2e7d32" : "2px dashed #fff",
-        borderRadius: 2,
-        p: 2,
-        textAlign: "center",
-        color: "white",
-        cursor: "pointer",
-        transition: "0.3s",
-      }}
+          border: "2px dashed #81c784",
+          p: 4,
+          textAlign: "center",
+          borderRadius: 2,
+          bgcolor: "#f1f8f4",
+          transition: "all .2s ease",
+          "&:hover": {
+            bgcolor: "#e8f5e9",
+            borderColor: "#2e7d32",
+          },
+        }}
       onClick={() => inputRef.current?.click()}
       onDrop={handleDrop}
       onDragOver={handleDragOver}

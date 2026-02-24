@@ -23,6 +23,8 @@ export default function TablaUsuarios({
 }) {
   const [busqueda, setBusqueda] = useState("");
 
+  console.log("Usuarios en TablaUsuarios:", usuarios); // Verifica que los datos llegan correctamente
+  
   const usuariosFiltrados = usuarios.filter((u) => {
     const texto = busqueda.toLowerCase();
     return (

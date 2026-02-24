@@ -1,228 +1,95 @@
+"use client";
 
-" use client";
-
-import * as React from "react";
+import { Box, Typography, IconButton, Tooltip } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Grid, Box, Typography,Button,Tooltip,IconButton } from "@mui/material";
+import Image from "next/image";
 import imagenUas from "../public/images/logo_uas2.png";
 import logoDGES from "../public/images/logo_dges.png";
 import logoVision from "../public/images/logo_administracion.png";
-import Image from "next/image";
 
 export default function Header() {
-        const handleLogout = async () => {
-            await fetch("/api/logout", {
-                method: "POST",
-            });
-            localStorage.removeItem("auth");
-            window.location.href = "/login";
-        };
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" });
+    localStorage.removeItem("auth");
+    window.location.href = "/login";
+  };
 
   return (
     <>
-    <Grid
-        container
-        alignItems="center"
+      {/* HEADER PRINCIPAL */}
+      <Box
         sx={{
-        background: "linear-gradient(to right, #1d70b8, #0c3b74)",
-        p: 0,
-        height: "115px", 
-        position: "relative", 
+          background: "linear-gradient(to right, #1d70b8, #0c3b74)",
+          px: 2,
+          py: 1,
         }}
-        >
-            {/* --- IZQUIERDA: Logo UAS (md={2}) --- */}
-            <Grid
-            item
-            xs={12}
-            md={2}
-            display="flex"
-            justifyContent="flex-start"
-            alignItems="stretch"
-            sx={{
-                pl: 0,
-                overflow: "hidden",
-            }}
-            >
-            <Box
-                sx={{
-                height: "100%",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "center",
-                }}
-            >
-                <Image
-                src={imagenUas}
-                alt="Logo UAS"
-                style={{
-                    height: "100%",
-                    width: "auto",
-                    objectFit: "contain",
-                }}
-                />
-            </Box>
-            </Grid>
-
-
-        {/* --- CENTRO: Texto (md={10}) --- */}
-        <Grid
-            item
-            xs={12}
-            md={10} 
-            display="flex"
-            justifyContent="flex-start"  
-            alignItems="center"
-            sx={{ 
-                ml: { md: 3 }, 
-                pr: { md: '300px' }, 
-                mb:3,
-            }} 
-            >
-            <Box 
-                sx={{ 
-                    color: "white", 
-                    fontWeight: "bold", 
-                    // El bloque de texto en sí está alineado a la izquierda
-                    textAlign: "left", 
-                    lineHeight: 1.1, 
-                }}
-            >
-                {/* Línea 1: DIRECCIÓN GENERAL DE */}
-                <Typography
-                variant="h5" // Usamos un tamaño grande
-                sx={{
-                    color: "white",
-                    fontWeight: "bold",
-                    textAlign: "left", 
-                    letterSpacing: 1,
-                    // Ajuste manual para el tamaño de la primera línea
-                    fontSize: { xs: '1.3rem', md: '2.0rem' }, 
-                    lineHeight: 1,
-                }}
-                >
-                DIRECCIÓN GENERAL DE
-                </Typography>
-
-                {/* Línea 2: EDUCACIÓN SUPERIOR */}
-                <Typography
-                variant="h5" // Usamos un tamaño ligeramente menor
-                sx={{
-                    color: "white",
-                    fontWeight: "bold",
-                    textAlign: "left", 
-                    letterSpacing: 1,
-                    // Ajuste manual para el tamaño de la segunda línea
-                    fontSize: { xs: '1.3rem', md: '2.0rem' }, 
-                    lineHeight: 1,
-                    mt: 0.5, // Pequeño margen superior para separar de la primera línea
-                }}
-                >
-                EDUCACIÓN SUPERIOR
-                </Typography>
-            </Box>
-        </Grid>
-
-        {/* --- DERECHA EXTREMA: GRUPO DGES y VISIÓN (Posicionamiento Absoluto) --- */}
+      >
         <Box
-        sx={{
-            position: "absolute",
-            right: 10, 
-            top: 0,
-            height: "100%", 
+          sx={{
             display: "flex",
-            justifyContent: "flex-end", 
-            alignItems: "flex-start", 
-        }}
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
         >
-        {/* Contenedor Flex interno para los dos logos */}
-        <Box
-            sx={{
-            display: "flex",
-            height: "100%",
-            alignItems: "flex-start",
-            }}
-        >
-            {/* Logo DGES */}
-            <Box
-            sx={{
-                height: "100%",
-                display: "flex",
-                alignItems: "flex-start",
-            }}
-            >
-            <Image
-                src={logoDGES}
-                alt="Logo DGES"
-                style={{
-                height: "100%",
-                width: "auto",
-                objectFit: "contain",
-                }}
-            />
-            </Box>
+          {/* IZQUIERDA */}
+          <Image src={imagenUas} alt="Logo UAS" height={90} />
 
-            {/* Logo Visión */}
-            <Box
-            sx={{
-                height: "100%",
-                display: "flex",
-                alignItems: "flex-start",
-                ml: 1, // Pequeño margen para separar de DGES
-            }}
+          {/* CENTRO */}
+          <Box sx={{ color: "white", flex: 1, minWidth: 250 }}>
+            <Typography
+              sx={{
+                fontWeight: "bold",
+                fontSize: { xs: "1.1rem", md: "2rem" },
+                lineHeight: 1.1,
+              }}
             >
-            <Image
-                src={logoVision}
-                alt="Logo Vision"
-                style={{
-                height: "100%", 
-                width: "auto",
-                objectFit: "contain",
-                }}
-            />
-                <Tooltip title="Cerrar sesión" placement="right">
-                    <IconButton
-                        onClick={handleLogout}
-                        sx={{
-                        color: "#E8F5E9",
-                        "&:hover": {
-                            color: "#A5D6A7",
-                            backgroundColor: "rgba(255,255,255,0.1)",
-                        },
-                        }}
-                    >
-                        <LogoutIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        </Box>
-        </Box>
-    </Grid>
+              DIRECCIÓN GENERAL DE
+            </Typography>
+            <Typography
+              sx={{
+                fontWeight: "bold",
+                fontSize: { xs: "1.1rem", md: "2rem" },
+                lineHeight: 1.1,
+              }}
+            >
+              EDUCACIÓN SUPERIOR
+            </Typography>
+          </Box>
 
-    {/* Franja inferior UAS*/}
-    <Box
+          {/* DERECHA */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Image src={logoDGES} alt="DGES" height={80} />
+            <Image src={logoVision} alt="Visión" height={80} />
+
+            <Tooltip title="Cerrar sesión">
+              <IconButton onClick={handleLogout} sx={{ color: "white" }}>
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* FRANJA INFERIOR */}
+      <Box
         sx={{
-        background: "linear-gradient(to right, #195fa5, #0c3b74)",
-        height: "35px",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        letterSpacing: "0.8rem",
+          background: "linear-gradient(to right, #195fa5, #0c3b74)",
+          textAlign: "center",
+          py: 1,
         }}
-    >
+      >
         <Typography
-        variant="subtitle1"
-        sx={{
+          sx={{
             color: "white",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "1.8rem",
-        }}
+            letterSpacing: { xs: "0.4rem", md: "1.2rem" },
+            fontSize: { xs: "0.7rem", md: "1rem" },
+          }}
         >
-        Universidad Autónoma de Sinaloa
+          UNIVERSIDAD AUTÓNOMA DE SINALOA
         </Typography>
-    </Box>
+      </Box>
     </>
-    );
+  );
 }
-
-

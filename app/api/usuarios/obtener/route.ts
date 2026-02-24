@@ -21,8 +21,8 @@ export async function GET() {
         p.TipoPermiso
       FROM usuario u
       LEFT JOIN usuario_permiso p ON u.Id = p.UsuarioId
-      LEFT JOIN rol r ON u.RolId = r.Id
-      WHERE u.Activo = 1
+      LEFT JOIN rol r ON u.RolId = r.Id 
+      WHERE u.Activo = 1 
       ORDER BY u.Id DESC
     `);
 

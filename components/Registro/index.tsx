@@ -3,23 +3,31 @@
 import { useState, useEffect } from "react";
 import TablaUsuarios from "./TablaUsuarios";
 import FormularioUsuario from "./FormularioUsuario";
-import Modal from "../Modal";
+import Modal from "../ModalConfirm";
 import { Box, CircularProgress } from "@mui/material";
+import ModalConfirm from "../ModalConfirm";
+
+type Usuario = {
+  UsuarioId: number;
+  Nombre: string;
+  Correo?: string;
+  RolId?: number;
+};
 
 export default function RegistroUsuarios() {
-  const [vista, setVista] = useState("lista");
-  const [usuarios, setUsuarios] = useState([]);
-  const [usuarioEditar, setUsuarioEditar] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [vista, setVista] = useState<"lista" | "formulario">("lista");
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [usuarioEditar, setUsuarioEditar] = useState<Usuario | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [openModal, setOpenModal] = useState(false);
-  const [usuarioEliminar, setUsuarioEliminar] = useState(null);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [usuarioEliminar, setUsuarioEliminar] = useState<Usuario | null>(null);
 
   const cargarUsuarios = async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/usuarios/obtener");
-      const data = await res.json();
+      const data: Usuario[] = await res.json();
       setUsuarios(data);
     } catch (err) {
       console.error("Error al cargar usuarios:", err);
@@ -43,12 +51,12 @@ export default function RegistroUsuarios() {
     setVista("formulario");
   };
 
-  const handleEditar = (usuario) => {
+  const handleEditar = (usuario: Usuario) => {
     setUsuarioEditar(usuario);
     setVista("formulario");
   };
 
-  const handleEliminar = (usuario) => {
+  const handleEliminar = (usuario: Usuario) => {
     setUsuarioEliminar(usuario);
     setOpenModal(true);
   };
@@ -88,7 +96,7 @@ export default function RegistroUsuarios() {
         />
       )}
 
-      <Modal
+      <ModalConfirm
         open={openModal}
         onClose={() => {
           setOpenModal(false);
@@ -97,6 +105,7 @@ export default function RegistroUsuarios() {
         onConfirm={confirmarEliminar}
         fileName={usuarioEliminar?.Nombre}
       />
+      
     </Box>
   );
 }

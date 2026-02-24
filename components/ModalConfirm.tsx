@@ -9,7 +9,7 @@ interface ModalProps {
   fileName?: string;       // Opcional, por si quieres mostrar el nombre del archivo
 }
 
-export default function Modal({
+export default function ModalConfirm({
   open,
   onClose,
   onConfirm,
