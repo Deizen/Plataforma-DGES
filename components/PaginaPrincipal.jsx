@@ -293,7 +293,7 @@ const filteredCarreras =
     carrera: carreraSeleccionada?.value,
   });
 
-    React.useEffect(() => {
+  React.useEffect(() => {
     const cargarSemestres = async () => {
       if (!carreraId || !selectedModalidad) return;
 
@@ -309,7 +309,16 @@ const filteredCarreras =
       });
 
       const data = await res.json();
-      setSemestresCarrera(data);
+
+      if (!data || data.length === 0) {
+        // agregar semestre 6 manualmente
+        const semestreDefault = [{ value: 6, label: "Semestre 6" }];
+
+        setSemestresCarrera(semestreDefault);
+        setSelectedSemestre(6);
+      } else {
+        setSemestresCarrera(data);
+      }
     };
 
     cargarSemestres();
