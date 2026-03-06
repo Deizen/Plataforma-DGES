@@ -42,6 +42,10 @@ export default function FormularioUsuario({
   /* ====================== PERMISOS ====================== */
   const [permisos, setPermisos] = useState([permisoVacio]);
   const [mensaje, setMensaje] = useState("");
+
+  /* ====================== MODULOS ====================== */
+const [modulos, setModulos] = useState([]);
+const [modulosSeleccionados, setModulosSeleccionados] = useState([]);
   
   const requierePermisos = selectedRol && !ROLES_SIN_PERMISOS.includes(Number(selectedRol));
 
@@ -74,6 +78,21 @@ export default function FormularioUsuario({
     setContrasena("");
   }, [usuarioEditar]);
 
+  /* ====================== CARGAR MODULOS ====================== */
+  useEffect(() => {
+    const cargarModulos = async () => {
+      try {
+        const res = await fetch("/api/modulos");
+        const data = await res.json();
+        setModulos(data);
+      } catch (err) {
+        console.error("Error cargando módulos", err);
+      }
+    };
+
+    cargarModulos();
+  }, []);
+
   /* ====================== VISIBILIDAD ====================== */
   const showUnidad = selectedRol >= 2;
   const showLocalidad = selectedRol >= 3;
@@ -96,6 +115,17 @@ export default function FormularioUsuario({
     return null;
   };
 
+  const toggleModulo = (moduloId) => {
+    if (modulosSeleccionados.includes(moduloId)) {
+      setModulosSeleccionados(
+        modulosSeleccionados.filter((id) => id !== moduloId)
+      );
+    } else {
+      setModulosSeleccionados([...modulosSeleccionados, moduloId]);
+    }
+  };
+
+
   /* ====================== GUARDAR ====================== */
   const handleSubmit = async () => {
     const error = validar();
@@ -113,6 +143,7 @@ export default function FormularioUsuario({
       RolId: selectedRol,
       //Permisos: permisos,
       Permisos: requierePermisos ? permisos : [],
+      Modulos: modulosSeleccionados,
     };
 
     const url = usuarioEditar
@@ -395,6 +426,42 @@ export default function FormularioUsuario({
     );
   })}
       
+  {/* ======================= MODULOS ======================= */}
+
+  <Paper elevation={2} sx={{ p: 3, mt: 2, borderRadius: 3 }}>
+    <Typography sx={{ mb: 1.5, fontWeight: "bold", color: "#2e7d32" }}>
+      Acceso a módulos del sistema
+    </Typography>
+
+    <Grid container spacing={1}>
+      {modulos.map((m) => (
+        <Grid item xs={12} sm={6} md={4} key={m.Id}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              border: "1px solid #e0e0e0",
+              borderRadius: 2,
+              p: 1,
+              cursor: "pointer",
+            }}
+            onClick={() => toggleModulo(m.Id)}
+          >
+            <input
+              type="checkbox"
+              checked={modulosSeleccionados.includes(m.Id)}
+              readOnly
+            />
+
+            <Typography>{m.Nombre}</Typography>
+          </Box>
+        </Grid>
+      ))}
+    </Grid>
+  </Paper>
+
+
 
       <Button
         sx={{ mt: 2 }}

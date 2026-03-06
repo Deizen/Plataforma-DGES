@@ -12,6 +12,7 @@ export async function POST(req: Request) {
       Password,
       RolId,
       Permisos = [],
+      Modulos = [],
     } = await req.json();
 
     if (!Id || !Nombre || !Usuario || !RolId) {
@@ -23,7 +24,9 @@ export async function POST(req: Request) {
 
     await connection.beginTransaction();
 
+    // ==============================
     // 1. Actualizar usuario
+    // ==============================
     if (Password) {
       await connection.query(
         `UPDATE usuario
@@ -40,13 +43,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // ==============================
     // 2. Eliminar permisos existentes
+    // ==============================
     await connection.query(
       `DELETE FROM usuario_permiso WHERE UsuarioId = ?`,
       [Id]
     );
 
+    // ==============================
     // 3. Insertar permisos nuevos
+    // ==============================
     for (const p of Permisos) {
       await connection.query(
         `INSERT INTO usuario_permiso
@@ -63,13 +70,34 @@ export async function POST(req: Request) {
       );
     }
 
+    // ==============================
+    // 4. Eliminar módulos existentes
+    // ==============================
+    await connection.query(
+      `DELETE FROM usuario_modulo WHERE UsuarioId = ?`,
+      [Id]
+    );
+
+    // ==============================
+    // 5. Insertar módulos nuevos
+    // ==============================
+    for (const moduloId of Modulos) {
+      await connection.query(
+        `INSERT INTO usuario_modulo (UsuarioId, ModuloId)
+         VALUES (?, ?)`,
+        [Id, moduloId]
+      );
+    }
+
     await connection.commit();
 
     return NextResponse.json({
       message: "Usuario actualizado correctamente",
     });
+
   } catch (error: any) {
     await connection.rollback();
+
     return NextResponse.json(
       { error: "Error al editar usuario", detail: error.message },
       { status: 500 }

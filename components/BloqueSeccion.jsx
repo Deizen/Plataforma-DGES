@@ -25,7 +25,7 @@ export default function BloqueSeccion({ visible }) {
         Sección bloqueada
       </Typography>
       <Typography sx={{ color: "#2e7d32" }}>
-        Selecciona todos los filtros para mostrar la sección de archivos.
+        Selecciona todos los filtros para mostrar la sección.
       </Typography>
     </Box>
   );

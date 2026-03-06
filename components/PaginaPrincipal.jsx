@@ -14,7 +14,7 @@ import BloqueUploader from "@/components/BloqueUploader";
 import SeccionTexto from "@/components/SeccionTexto";
 import CargaArchivosSemestre from "@/components/CargaArchivosSemestre";
 import TablaUnidadesSemestre from "@/components/TablaUnidadesSemestre";
-import Trayectorias from "@/components/Trayectorias";
+import TablaTrayectorias from "@/components/TablaTrayectorias";
 import BloqueSeccion from "@/components/BloqueSeccion";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -86,9 +86,8 @@ export default function PaginaPrincipal({ tipoModulo = "archivos" }) {
   const [comentarios, setComentarios] = React.useState("");
   const [observaciones, setObservaciones] = React.useState("");  
 
-  const semestresCarrera = [
-    { label: "Semestre 6", value: 6 },
-    ];
+  const [semestresCarrera, setSemestresCarrera] = React.useState([]);
+
 
     React.useEffect(() => {
       const userData = localStorage.getItem("user");
@@ -117,7 +116,8 @@ export default function PaginaPrincipal({ tipoModulo = "archivos" }) {
       }
     }, []);
   
-  
+
+
   const { unidades, localidades, escuelas, carreras, modalidades } = useCatalogos();
 
   React.useEffect(() => {
@@ -292,6 +292,28 @@ const filteredCarreras =
     escuela: selectedEscuela,
     carrera: carreraSeleccionada?.value,
   });
+
+    React.useEffect(() => {
+    const cargarSemestres = async () => {
+      if (!carreraId || !selectedModalidad) return;
+
+      const res = await fetch("/api/semestres/obtener", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          carreraId,
+          modalidadId: selectedModalidad,
+        }),
+      });
+
+      const data = await res.json();
+      setSemestresCarrera(data);
+    };
+
+    cargarSemestres();
+  }, [carreraId, selectedModalidad]);
 
   const soloLectura = tipoPermiso === 2; // Si es solo lectura o no es admin
 
@@ -531,14 +553,14 @@ const filteredCarreras =
     const filtrosCompletos = Object.values(camposSeleccionados).every(v => v);
     
     const cardStyle = {
-      bgcolor: "rgba(255,255,255,0.95)",
-      p: 2.5,
-      borderRadius: 3,
-      boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
-      transition: "all 0.3s ease",
+      bgcolor: "rgba(255,255,255,0.97)",
+      p: 1.5, // antes 2.5
+      borderRadius: 2, // antes 3
+      boxShadow: "0 3px 8px rgba(0,0,0,0.12)", // más suave
+      transition: "all 0.2s ease",
       "&:hover": {
-        transform: "translateY(-3px)",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+        transform: "translateY(-1px)", // menos movimiento
+        boxShadow: "0 5px 14px rgba(0,0,0,0.18)",
       },
     };
 
@@ -554,7 +576,7 @@ const filteredCarreras =
         {/* ===== RENGLÓN 1 ========= */}
         <Box
           sx={{
-            position: "sticky",
+            //position: "sticky",
             top: 0,
             zIndex: 10,
             backdropFilter: "blur(6px)",
@@ -562,7 +584,7 @@ const filteredCarreras =
             boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
           }}
         >
-          <Grid container spacing={3} sx={{ p: 3 }}>
+          <Grid container spacing={2} sx={{ px: 2, py: 2, width: "100%" }}>
             <Grid item xs={12} md={4}>
               <Box sx={cardStyle}>
                 <Select
@@ -621,7 +643,7 @@ const filteredCarreras =
         {/* ========================= */}
         <Box
           sx={{
-            overflow: "hidden",
+            //overflow: "hidden",
             transition: "all 0.4s ease",
             opacity: selectedEscuela ? 1 : 0,
             transform: selectedEscuela
@@ -630,7 +652,7 @@ const filteredCarreras =
             maxHeight: selectedEscuela ? "500px" : "0px",
           }}
         >
-          <Grid container spacing={3} sx={{ px: 3, pb: 4 }}>
+          <Grid container spacing={2} sx={{ px: 2, py: 2, width: "100%" }}>
             <Grid item xs={12} md={4}>
               <Box sx={cardStyle}>
                 <Select
@@ -729,36 +751,16 @@ const filteredCarreras =
 
             )}
             {tipoModulo === "trayectorias" && (
-              <Trayectorias
-                filtrosCompletos={
-                  carreraId &&
-                  selectedModalidad &&
-                  selectedSemestre
-                }
-                soloLectura={soloLectura}
+              <TablaTrayectorias
+                carreraId={carreraId}
+                modalidadId={selectedModalidad}
+                semestreId={selectedSemestre}
+                tipoPermiso={tipoPermiso}
+                esAdmin={rol === 1}
               />
             )}
           </>
         )}
-
-        {/* {carreraId && selectedModalidad && selectedSemestre && (
-          <TablaUnidadesSemestre
-            carreraId={carreraId}
-            modalidadId={selectedModalidad}
-            semestreId={selectedSemestre}
-            tipoPermiso={tipoPermiso}
-            esAdmin={rol === 1}
-          />
-        )} */}
-     {/* {selectedSemestre && (
-        <TablaUnidadesSemestre
-          carreraId={carreraId}
-          modalidadId={selectedModalidad}
-          semestreId={selectedSemestre}
-          tipoPermiso={tipoPermiso}
-          esAdmin={rol === 1}
-        />
-      )} */}
     </Box>
   );
 }

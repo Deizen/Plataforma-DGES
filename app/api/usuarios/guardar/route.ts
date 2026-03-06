@@ -11,8 +11,8 @@ export async function POST(req: Request) {
       Password,
       RolId,
       Permisos = [],
+      Modulos = [],
     } = await req.json();
-
 
     if (!Nombre || !Usuario || !Password || !RolId) {
       return NextResponse.json(
@@ -23,7 +23,9 @@ export async function POST(req: Request) {
 
     await connection.beginTransaction();
 
+    // ==============================
     // 1. Crear usuario
+    // ==============================
     const [userResult]: any = await connection.query(
       `INSERT INTO usuario (Nombre, Usuario, Password, RolId)
        VALUES (?, ?, ?, ?)`,
@@ -32,7 +34,9 @@ export async function POST(req: Request) {
 
     const usuarioId = userResult.insertId;
 
+    // ==============================
     // 2. Insertar permisos
+    // ==============================
     for (const p of Permisos) {
       await connection.query(
         `INSERT INTO usuario_permiso
@@ -49,6 +53,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // ==============================
+    // 3. Insertar módulos
+    // ==============================
+    for (const moduloId of Modulos) {
+      await connection.query(
+        `INSERT INTO usuario_modulo (UsuarioId, ModuloId)
+         VALUES (?, ?)`,
+        [usuarioId, moduloId]
+      );
+    }
+
     await connection.commit();
 
     return NextResponse.json(
@@ -57,6 +72,7 @@ export async function POST(req: Request) {
     );
   } catch (error: any) {
     await connection.rollback();
+
     return NextResponse.json(
       { error: "Error al crear usuario", detail: error.message },
       { status: 500 }

@@ -5,7 +5,7 @@ import * as React from "react";
 import Header from "@/components/Header";
 import Registro from "@/components/Registro";
 import Archivos from "@/components/PaginaPrincipal";
-import Directorio from "@/components/DirectorioTabla";
+import Directorio from "@/components/Directorio";
 
 import { Box, Button } from "@mui/material";
 
