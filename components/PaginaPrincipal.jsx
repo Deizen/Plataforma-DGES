@@ -311,7 +311,6 @@ const filteredCarreras =
       const data = await res.json();
 
       if (!data || data.length === 0) {
-        // agregar semestre 6 manualmente
         const semestreDefault = [{ value: 6, label: "Semestre 6" }];
 
         setSemestresCarrera(semestreDefault);
