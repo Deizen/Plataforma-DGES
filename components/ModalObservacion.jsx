@@ -1,6 +1,6 @@
 "use client";
 
-import Modal from "@/components/ModalConfirm";
+import Modal from "@/components/ModalBase";
 import SeccionTexto from "@/components/SeccionTexto";
 import { useState, useEffect } from "react";
 

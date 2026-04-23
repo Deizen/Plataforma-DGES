@@ -310,7 +310,8 @@ const filteredCarreras =
 
       const data = await res.json();
 
-      if (!data || data.length === 0) {
+      if (!data || data.length === 0 || (tipoModulo === "planDesarrollo" ||
+              tipoModulo === "planeacion") ) {
         const semestreDefault = [{ value: 6, label: "Semestre 6" }];
 
         setSemestresCarrera(semestreDefault);

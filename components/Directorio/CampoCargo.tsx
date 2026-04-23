@@ -45,7 +45,7 @@ export default function CampoCargo({ cargo, unidadAcademicaId }: Props) {
 
   // 🔹 Buscar usuarios
   const buscarUsuarios = async (query: string) => {
-    const res = await fetch(`/api/usuarios/buscar?q=${query}`);
+    const res = await fetch(`/api/personal/buscar?q=${query}`);
     const data = await res.json();
     setOpciones(data);
   };
